@@ -16,8 +16,7 @@ Sim
 
 
 
-Python Boilerplate contains all the boilerplate you need to create a Python package.
-
+basic simulation of ring grid polymer
 
 * Free software: MIT license
 * Documentation: https://sim.readthedocs.io.
