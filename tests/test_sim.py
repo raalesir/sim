@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+
+
+## !/usr/bin/env python
 
 """Tests for `sim` package."""
 
@@ -37,5 +39,5 @@ def test_command_line_interface():
     assert '--help  Show this message and exit.' in help_result.output
 
 
-def test_add():
-    assert aux.add(1,2) == 3
+# def test_add():
+#     assert aux.add(1,2) == 3

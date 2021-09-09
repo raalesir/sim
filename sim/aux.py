@@ -6,9 +6,10 @@ import  numpy as  np
 
 
 try:
-    from consts import N
-except ModuleNotFoundError:
     from sim.consts import N
+# except ModuleNotFoundError:
+except:
+    from sim.sim.consts import N
 
 
 
