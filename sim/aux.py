@@ -289,4 +289,20 @@ def unroll_chain(coords, rotation_sequence, rotation):
     return coords
 
 
+def run_kinks(coords, n_steps):
+    """
+        runs the ``n_steps`` random kinks
+
+    :param coords:  (3,N) coords for ring polymer
+    :type numpy array
+    :param n_steps: number of kinks
+    :type n_steps: int
+    :return: (3,N) coords after performing ``n_steps`` random kinks
+    :rtype:
+    """
+    for i in range(n_steps):
+        kink, kink_minus, kink_plus = prepare_kink(coords)
+        coords = kink_move(coords, kink, kink_minus, kink_plus)
+
+    return coords
 
