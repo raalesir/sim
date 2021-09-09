@@ -34,4 +34,7 @@ if __name__ == "__main__":
 
     print(coords)
 
+    print('kinking')
+    coords = run_kinks(coords, 10000)
+    print(coords)
 
