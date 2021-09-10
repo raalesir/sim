@@ -38,3 +38,6 @@ if __name__ == "__main__":
     coords = run_kinks(coords, 10000)
     print(coords)
 
+    print("running crankshafts")
+    coords  = run_crankshafts(coords, 10000, rotation_matrices)
+    print(coords)

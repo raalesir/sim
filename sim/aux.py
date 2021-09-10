@@ -3,7 +3,7 @@ Auxiliary routines for  the modeler
 -----------------------------------
 """
 import  numpy as  np
-
+import  random
 
 try:
     from consts import N
@@ -289,6 +289,7 @@ def unroll_chain(coords, rotation_sequence, rotation):
     return coords
 
 
+
 def run_kinks(coords, n_steps):
     """
         runs the ``n_steps`` random kinks
@@ -298,13 +299,37 @@ def run_kinks(coords, n_steps):
     :param n_steps: number of kinks
     :type n_steps: int
     :return: (3,N) coords after performing ``n_steps`` random kinks
-    :rtype:
+    :rtype:   numpy array, int
     """
     for i in range(n_steps):
         kink, kink_minus, kink_plus = prepare_kink(coords)
         coords = kink_move(coords, kink, kink_minus, kink_plus)
 
     return coords
+
+
+
+def run_crankshafts(c, n_steps, rot):
+    """
+
+    :param c: (3,N) coords for ring polymer
+    :type c: numpy array, int
+    :param n_steps: number of crankshafts
+    :type n_steps: int
+    :param rot: rotation matrices
+    :type rot: numpy (3,3,6)  array, float
+    :return: (3,N) coords after performing ``n_steps`` random crankshafts
+    :rtype: numpy array, int
+    """
+
+    for i in range(n_steps):
+
+        crank, crank1, rotation = prepare_crank(c)
+        c = crankshaft_move(c, crank, crank1, rot[:, :, rotation])
+
+    return c
+
+
 
 def add(a,b):
     return a+b
