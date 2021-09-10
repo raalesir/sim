@@ -38,8 +38,29 @@ if __name__ == "__main__":
     coords = run_kinks(coords, 10000)
     print(coords)
 
+    # print("running crankshafts")
+    # coords  = run_crankshafts(coords, 10, rotation_matrices)
+    # print(coords)
+    print("checking borders")
+    print(check_borders(coords))
+
     print("running crankshafts")
-    coords  = run_crankshafts(coords, 10000, rotation_matrices)
-    print(coords)
+
+    for  step in range(10000):
+        coords_save = coords.copy()
+        if random.random() < 0.2:
+            coords_tmp = run_crankshafts(coords, 1, rotation_matrices)
+        else:
+            coords_tmp = run_kinks(coords, 1)
+
+        if check_borders(coords_tmp):
+            coords = coords_tmp
+            # print('post check', check_borders(coords))
+
+        else:
+            coords = coords_save
+
+    print("checking borders")
+    print(check_borders(coords))
 
 
