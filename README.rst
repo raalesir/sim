@@ -7,10 +7,6 @@ Sim
         :target: https://pypi.python.org/pypi/sim
 
 
-master: 
-[![Build Status](https://app.travis-ci.com/raalesir/sim.svg?branch=master)](https://travis-ci.com/raalesir/sim)
-
-
 master:
 
 .. image:: https://img.shields.io/travis/raalesir/sim.svg?branch=master
