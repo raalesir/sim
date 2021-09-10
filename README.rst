@@ -6,14 +6,14 @@ Sim
 .. image:: https://img.shields.io/pypi/v/sim.svg
         :target: https://pypi.python.org/pypi/sim
 
-master:
 
-.. image:: https://app.travis-ci.com/raalesir/sim.svg?branch=master
+master: |master| dev: |dev|
+
+
+.. |master| image:: https://app.travis-ci.com/raalesir/sim.svg?branch=master
     :target: https://app.travis-ci.com/raalesir/sim
     
-dev:
-
-.. image:: https://app.travis-ci.com/raalesir/sim.svg?branch=dev
+.. |dev| image:: https://app.travis-ci.com/raalesir/sim.svg?branch=dev
     :target: https://app.travis-ci.com/raalesir/sim
 
 .. image:: https://readthedocs.org/projects/simec/badge/?version=latest
