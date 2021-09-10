@@ -6,9 +6,9 @@ import  numpy as  np
 import  random
 
 try:
-    from consts import N
+    from consts import N, A, B
 except ModuleNotFoundError:
-    from sim.sim.consts import N
+    from sim.sim.consts import N, A, B
 
 
 
@@ -329,6 +329,24 @@ def run_crankshafts(c, n_steps, rot):
 
     return c
 
+
+
+
+def check_borders(c):
+    """
+        given coordinates ``c`` checks if any of the coordinates leaves the bound box
+
+    :param c: 3D coordinates, (3,N)
+    :type c: numpy array, int
+    :return: True of False
+    :rtype: bool
+    """
+
+    if (np.max(c[0,:]) < A) & (np.max(c[1,:]) < B) & (np.max(c[2]) < A) &\
+        (np.min(c[0,:]) > 0) & (np.min(c[1,:]) >0) & (np.min(c[2]) >0):
+        return True
+    else:
+        return False
 
 
 def add(a,b):
