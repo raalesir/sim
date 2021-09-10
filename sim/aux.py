@@ -208,10 +208,10 @@ def make_circular_chain(N):
 
     i0, i1, i2, i3 = make_circular_indexes(N)
     print(i0, i1, i2, i3)
-    c[:, i0] = np.array([0, 1, 0] + init_point).reshape(3, 1)
-    c[:, i1] = np.array([1, 1, 0] + init_point).reshape(3, 1)
-    c[:, i2] = np.array([0, 0, 0] + init_point).reshape(3, 1)
-    c[:, i3] = np.array([1, 0, 0] + init_point).reshape(3, 1)
+    c[:, i0] = (np.array([0, 1, 0]) + init_point).reshape(3, 1)
+    c[:, i1] = (np.array([1, 1, 0]) + init_point).reshape(3, 1)
+    c[:, i2] = (np.array([0, 0, 0]) + init_point).reshape(3, 1)
+    c[:, i3] = (np.array([1, 0, 0]) + init_point).reshape(3, 1)
 
     return c
 
