@@ -11,3 +11,4 @@ Click==7.0
 pytest==6.2.4
 
 numpy==1.21.2
+sphinx-sizzle-theme==0.0.9
