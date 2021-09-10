@@ -55,7 +55,7 @@ def test_check_borders_fail():
     :rtype: bool
     """
 
-    coords = np.array([[1,1,1], [1,1,2], [1,1,3], [1,1,4], [1,1,5]]).T
+    coords = np.array([[0, 1,1], [1,1,1], [1,1,2], [1,1,3], [1,1,4]]).T
 
     assert aux.check_borders(coords) == False
 
