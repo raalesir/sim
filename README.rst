@@ -6,8 +6,9 @@ Sim
 .. image:: https://img.shields.io/pypi/v/sim.svg
         :target: https://pypi.python.org/pypi/sim
 
-.. image:: https://img.shields.io/travis/raalesir/sim.svg
+master .. image:: https://img.shields.io/travis/raalesir/sim.svg?branch=master
         :target: https://travis-ci.com/raalesir/sim
+
 
 .. image:: https://readthedocs.org/projects/simec/badge/?version=latest
         :target: https://simec.readthedocs.io/en/latest/?version=latest
