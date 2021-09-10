@@ -9,7 +9,7 @@ Sim
 .. image:: https://img.shields.io/travis/raalesir/sim.svg
         :target: https://travis-ci.com/raalesir/sim
 
-.. image:: https://readthedocs.org/projects/sim/badge/?version=latest
+.. image:: https://readthedocs.org/projects/simec/badge/?version=latest
         :target: https://simec.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
 
