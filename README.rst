@@ -8,7 +8,7 @@ Sim
 
 
 master: 
-[![Build Status](https://img.shields.io/travis/raalesir/sim.svg?branch=master)](https://travis-ci.com/raalesir/sim)
+[![Build Status](https://app.travis-ci.com/raalesir/sim.svg?branch=master)](https://travis-ci.com/raalesir/sim)
 
 
 master:
