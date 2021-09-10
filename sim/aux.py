@@ -181,6 +181,18 @@ def make_circular_indexes(N):
 
 
 
+def settle_init_point():
+    """
+    returns the initial point for the chain as the center of  the parallepiped specified by ``A`` and ``B``.
+
+
+    :return: initial position of the polymer,  (1,3) numpy array
+    :rtype: int
+    """
+    return np.array([A//2, B//2, A//2])
+
+
+
 def make_circular_chain(N):
     """
         making circular chain of N beads
@@ -191,17 +203,15 @@ def make_circular_chain(N):
     :rtype: numpy array (3,N)
     """
 
-    """
-    """
-
     c = np.zeros((3, N))
+    init_point = settle_init_point()
 
     i0, i1, i2, i3 = make_circular_indexes(N)
     print(i0, i1, i2, i3)
-    c[:, i0] = np.array([0, 1, 0]).reshape(3, 1)
-    c[:, i1] = np.array([1, 1, 0]).reshape(3, 1)
-    c[:, i2] = np.array([0, 0, 0]).reshape(3, 1)
-    c[:, i3] = np.array([1, 0, 0]).reshape(3, 1)
+    c[:, i0] = np.array([0, 1, 0] + init_point).reshape(3, 1)
+    c[:, i1] = np.array([1, 1, 0] + init_point).reshape(3, 1)
+    c[:, i2] = np.array([0, 0, 0] + init_point).reshape(3, 1)
+    c[:, i3] = np.array([1, 0, 0] + init_point).reshape(3, 1)
 
     return c
 
