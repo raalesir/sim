@@ -11,7 +11,7 @@ Sim
 
 .. |master| image:: https://app.travis-ci.com/raalesir/sim.svg?branch=master
     :target: https://app.travis-ci.com/raalesir/sim
-    :align: middle
+    :align: vertical
     
 .. |dev| image:: https://app.travis-ci.com/raalesir/sim.svg?branch=dev
     :target: https://app.travis-ci.com/raalesir/sim
