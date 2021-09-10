@@ -3,9 +3,11 @@ Sim
 ===
 
 
-.. image:: https://img.shields.io/pypi/v/sim.svg
+
+|pypi| master: |master| dev: |dev| |rtd|
+
+.. |pypi| image:: https://img.shields.io/pypi/v/sim.svg
         :target: https://pypi.python.org/pypi/sim
-master: |master| dev: |dev|
 
 .. |master| image:: https://app.travis-ci.com/raalesir/sim.svg?branch=master
     :target: https://app.travis-ci.com/raalesir/sim
@@ -13,7 +15,7 @@ master: |master| dev: |dev|
 .. |dev| image:: https://app.travis-ci.com/raalesir/sim.svg?branch=dev
     :target: https://app.travis-ci.com/raalesir/sim
 
-.. image:: https://readthedocs.org/projects/simec/badge/?version=latest
+.. |rtd| image:: https://readthedocs.org/projects/simec/badge/?version=latest
         :target: https://simec.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
 
