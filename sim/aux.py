@@ -6,9 +6,8 @@ import  numpy as  np
 
 
 try:
-    from sim.consts import N
-# except ModuleNotFoundError:
-except:
+    from consts import N
+except ModuleNotFoundError:
     from sim.sim.consts import N
 
 
@@ -307,3 +306,5 @@ def run_kinks(coords, n_steps):
 
     return coords
 
+def add(a,b):
+    return a+b
