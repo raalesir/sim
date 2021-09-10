@@ -10,7 +10,7 @@ Sim
         :target: https://travis-ci.com/raalesir/sim
 
 .. image:: https://readthedocs.org/projects/sim/badge/?version=latest
-        :target: https://sim.readthedocs.io/en/latest/?version=latest
+        :target: https://simec.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
 
 
@@ -19,7 +19,7 @@ Sim
 basic simulation of ring grid polymer
 
 * Free software: MIT license
-* Documentation: https://sim.readthedocs.io.
+* Documentation: https://simec.readthedocs.io.
 
 
 Features
