@@ -20,6 +20,8 @@ except ModuleNotFoundError:
     from consts import  N
     from aux import *
 
+
+
 if __name__ == "__main__":
 
     print(N)
