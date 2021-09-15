@@ -69,7 +69,7 @@ class  CrankShaft(Move):
         :param B:         ending position to crank about
         :type B:            int
         :param rotation:    (3,3) rotation matrix
-        :type rotation:      Numpu array
+        :type rotation:      Numpy array
         :return:            (3,N) coordinates after crankshaft
         :rtype:              Numpy array
         """
