@@ -11,10 +11,15 @@ try:
     from sim.cell import CubicCell
     from sim.moves import  Kink, CrankShaft
     from sim.consts import  rot
-except:
-    from cell import CubicCell
-    from moves import Kink, CrankShaft
-    from consts import rot
+except ModuleNotFoundError:
+    try:
+        from cell import CubicCell
+        from moves import Kink, CrankShaft
+        from consts import rot
+    except:
+        from .cell import CubicCell
+        from .moves import Kink, CrankShaft
+        from .consts import rot
 # except:
 #     from  sim.cell import  CubicCell
 

@@ -9,9 +9,10 @@ import random
 try:
     from sim.consts  import rot
 except ModuleNotFoundError:
-    from  consts import rot
-# except:
-#     from consts import rot
+    try:
+        from consts import rot
+    except ModuleNotFoundError:
+        from  .consts import rot
 
 
 class Move:
