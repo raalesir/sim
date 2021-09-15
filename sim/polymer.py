@@ -1,16 +1,22 @@
+"""
+    Polymer class
+    =============
+
+"""
+
 import  numpy as np
 
 
 try:
-    from sim.sim.cell import CubicCell
-    from sim.sim.moves import  Kink, CrankShaft
-    from sim.sim.consts import  rot
-except ModuleNotFoundError:
-    from cell import CubiCell
+    from sim.cell import CubicCell
+    from sim.moves import  Kink, CrankShaft
+    from sim.consts import  rot
+except:
+    from cell import CubicCell
     from moves import Kink, CrankShaft
     from consts import rot
-except:
-    from  sim.cell import  CubicCell
+# except:
+#     from  sim.cell import  CubicCell
 
 
 class Polymer:

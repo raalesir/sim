@@ -6,9 +6,9 @@ import  numpy as  np
 import  random
 
 try:
-    from consts import N, A, B
+    from sim.consts import N, A, B
 except ModuleNotFoundError:
-    from sim.sim.consts import N, A, B
+    from consts import N, A, B
 
 
 
@@ -87,6 +87,7 @@ def prepare_kink(coords_):
 def prepare_crank(coords_):
     """
        generates input data for crankshaft move --  crank points and the index in the rotation list
+
     :param coords_:    (3,N) coordinates
     :type coords_:  numpy array
     :return:    tuple of 3 integers, ``(crank, crank1, rotation)``, where ``crank`` is the starting and ``crank1`` the ending \
@@ -302,8 +303,7 @@ def unroll_chain(coords, rotation_sequence, rotation):
 
 def run_kinks(coords, n_steps):
     """
-        runs the ``n_steps`` random kinks
-
+    runs the ``n_steps`` random kinks
     :param coords:  (3,N) coords for ring polymer
     :type numpy array
     :param n_steps: number of kinks

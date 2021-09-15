@@ -1,7 +1,18 @@
+"""
+    Moves class
+    ===========
+"""
+
 import numpy as np
 import random
 
-from sim.sim.consts  import rot
+try:
+    from sim.consts  import rot
+except ModuleNotFoundError:
+    from  consts import rot
+# except:
+#     from consts import rot
+
 
 class Move:
     """
@@ -32,27 +43,6 @@ class Move:
         self.output = self.make_move(n_steps)
         return  self.output
 
-    # @staticmethod
-    # def _make_rotation_matrices():
-    #     """
-    #         prepares rotation matrices
-    #
-    #     :return: returns 6 matrices with rotations around X,Y,Z axis on plus/minus 90 degrees.
-    #     :rtype: (3,3,6) numpy array
-    #     """
-    #
-    #     rot_z_1 = np.array([0, -1, 0, 1, 0, 0, 0, 0, 1]).reshape(3, 3, 1)
-    #     rot_z_2 = np.array([0, 1, 0, -1, 0, 0, 0, 0, 1]).reshape(3, 3, 1)
-    #
-    #     rot_x_1 = np.array([1, 0, 0, 0, 0, -1, 0, 1, 0]).reshape(3, 3, 1)
-    #     rot_x_2 = np.array([1, 0, 0, 0, 0, 1, 0, -1, 0]).reshape(3, 3, 1)
-    #
-    #     rot_y_1 = np.array([0, 0, 1, 0, 1, 0, -1, 0, 0]).reshape(3, 3, 1)
-    #     rot_y_2 = np.array([0, 0, -1, 0, 1, 0, 1, 0, 0]).reshape(3, 3, 1)
-    #
-    #     rot = np.concatenate([rot_x_1, rot_x_2, rot_y_1, rot_y_2, rot_z_1, rot_z_2], axis=2)
-    #
-    #     return rot
 
 
 class  CrankShaft(Move):
