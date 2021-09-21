@@ -42,7 +42,7 @@ class Polymer:
 
         # if 'kink' in args:
         # self.kink = kink
-
+        self.coords_tmp = None
         self.coords = self.set_init_coords()
 
         for move in args:
@@ -51,6 +51,8 @@ class Polymer:
 
         # self.kink.coordinates = self.coords
         # self.kink.length = self.n
+
+        self.distance_matrix = None
 
 
     def __str__(self):
@@ -70,13 +72,42 @@ class Polymer:
         :rtype: bool
         """
 
-        if (np.max(self.coords[0, :]) < self.cell.A) & (np.max(self.coords[1, :]) < self.cell.B) & (np.max(self.coords[2]) < self.cell.C) & \
-                (np.min(self.coords[0, :]) > 0) & (np.min(self.coords[1, :]) > 0) & (np.min(self.coords[2]) > 0):
+        if (np.max(self.coords_tmp[0, :]) < self.cell.A) & (np.max(self.coords_tmp[1, :]) < self.cell.B) & (np.max(self.coords_tmp[2]) < self.cell.C) & \
+                (np.min(self.coords_tmp[0, :]) > 0) & (np.min(self.coords_tmp[1, :]) > 0) & (np.min(self.coords_tmp[2]) > 0):
             return True
         else:
             return False
 
 
+    def check_overlap(self):
+        """
+        checking chain for overlaps
+
+        :return: True/False
+        :rtype: bool
+        """
+
+        return self.coords_tmp.shape == np.unique(self.coords_tmp, axis=1).shape
+
+
+    def calculate_distances(self):
+        """
+        calculating distance matrix
+
+        :return: distance matrix `NxN`
+        :rtype: numpy array
+        """
+
+        size_ = self.coords.shape[1]
+        dst = np.zeros((size_, size_))
+        for i in range(size_):
+            for j in range(0, i):
+                tmp = self.coords[:, i] - self.coords[:, j]
+                dst[i, j] = np.dot(tmp, tmp)
+
+        self.distance_matrix = dst
+
+    # def save_distan
 
     def _make_circular_indexes(self):
         """
