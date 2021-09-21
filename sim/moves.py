@@ -167,18 +167,19 @@ class Pin(Move):
         """
 
         # print('making pin move')
-        pin = self.prepare_pin()
+        pin, pin_plus, pin_minus = self.prepare_pin()
+
         # print("pin is", pin)
         if pin:
             # print('pin worked')
-            self.coordinates = self.pin_move(pin)
+            self.coordinates = self.pin_move(pin, pin_plus, pin_minus)
         # else:
             # print('pin did not work')
         return self.coordinates
 
 
 
-    def pin_move(self, pin):
+    def pin_move(self, pin, ping_plus, pin_minus):
         """
         performs pin move
 
@@ -188,8 +189,11 @@ class Pin(Move):
 
         new_position_delta = random.choice([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 
-        self.coordinates[:, pin] += new_position_delta.T
-        print(self.coordinates[:, pin].shape, new_position_delta.T.shape)
+        # tmp = self.coordinates[:, pin] - self.coordinates[:, pin_minus]
+
+
+        self.coordinates[:, pin] = self.coordinates[:, pin_minus] + new_position_delta
+        # print(self.coordinates[:, pin].shape, new_position_delta)
 
         return  self.coordinates
 
@@ -220,11 +224,11 @@ class Pin(Move):
 
             if np.array_equal(self.coordinates[:, pin_minus], self.coordinates[:, pin_plus]):
                 the_same = True
-                return pin
+                return pin,  pin_plus, pin_minus
 
             n_attempts +=1
 
-        return   None
+        return   None, None, None
 
 
 
