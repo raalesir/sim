@@ -119,7 +119,7 @@ def test_poolymer_check_borders_fail():
 
     cell1 =  cell.CubicCell(2,2,2)
     polymer1 = polymer.Polymer(5, cell1)
-    polymer1.coords = np.array([[0, 1,1], [1,1,1], [1,1,2], [1,1,3], [1,1,4]]).T
+    polymer1.coords_tmp = np.array([[0, 1,1], [1,1,1], [1,1,2], [1,1,3], [1,1,4]]).T
     res = polymer1.check_borders()
 
     assert res == False
@@ -136,7 +136,7 @@ def test_poolymer_check_borders_pass():
 
     cell1 =  cell.CubicCell(5,5,5)
     polymer1 = polymer.Polymer(5, cell1)
-    polymer1.coords = np.array([[1, 1,1], [1,1,2], [1,1,3], [1,2,3], [1,3,3]]).T
+    polymer1.coords_tmp = np.array([[1, 1,1], [1,1,2], [1,1,3], [1,2,3], [1,3,3]]).T
     res = polymer1.check_borders()
 
     assert res == True
