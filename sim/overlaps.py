@@ -41,8 +41,8 @@ class Overlap:
         r = 0
         for i in range(self.n // 2 + 1):
             for j in range(self.n // 2 - i + 1):
-                r = r + math.factorial(self.n) / math.factorial(i) ** 2 / math.factorial(j) ** 2 / math.factorial(
-                    self.n // 2 - i - j) ** 2
+                r = r + math.factorial(self.n) / math.factorial(i)**2 / math.factorial(j)**2 / math.factorial(
+                    self.n // 2 - i - j)**2
         return r
 
     def fun(self, d, res):
@@ -58,6 +58,7 @@ class Overlap:
                 tmp[k] -= 1
 
                 self.fun(tmp, r)
+
 
     def calculate_steps(self):
         """
