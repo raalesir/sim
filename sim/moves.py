@@ -147,6 +147,87 @@ class  CrankShaft(Move):
         return self.coordinates
 
 
+class Pin(Move):
+    """
+    class for  pin move
+    """
+
+    def __init__(self):
+        super(Move, self).__init__()
+
+    def __str__(self):
+        return "pin"
+
+
+    def make_move(self, n_steps):
+        """
+        runs pin move
+        :return: (3,N) coords after performing pin move
+        :rtype: numpy array,  int
+        """
+
+        # print('making pin move')
+        pin = self.prepare_pin()
+        # print("pin is", pin)
+        if pin:
+            # print('pin worked')
+            self.coordinates = self.pin_move(pin)
+        # else:
+            # print('pin did not work')
+        return self.coordinates
+
+
+
+    def pin_move(self, pin):
+        """
+        performs pin move
+
+        :return: (3,N) coords after performing pin move
+        :rtype: numpy array,  int
+        """
+
+        new_position_delta = random.choice([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
+
+        self.coordinates[:, pin] += new_position_delta.T
+        print(self.coordinates[:, pin].shape, new_position_delta.T.shape)
+
+        return  self.coordinates
+
+
+    def prepare_pin(self):
+        """
+            prepares input data for the pin  move
+
+        :return: 3-tuple as (preceding, actual, succeeding)
+        :rtype: tuple of int
+        """
+
+        the_same = False
+        n_attempts = 0
+        # pin_ = None
+
+        while ((not the_same) & (n_attempts < 100)):
+
+            pin = np.random.randint(self.length)
+
+            pin_minus = pin - 1
+            pin_plus = pin + 1
+
+            if pin == 0:
+                pin_minus = self.length - 1
+            elif pin == self.length - 1:
+                pin_plus = 0
+
+            if np.array_equal(self.coordinates[:, pin_minus], self.coordinates[:, pin_plus]):
+                the_same = True
+                return pin
+
+            n_attempts +=1
+
+        return   None
+
+
+
 
 class Kink(Move):
     """
