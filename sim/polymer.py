@@ -9,16 +9,16 @@ import  numpy as np
 
 try:
     from sim.cell import CubicCell
-    from sim.moves import  Kink, CrankShaft
+    from sim.moves import  Kink, CrankShaft, Pin
     from sim.consts import  rot
 except ModuleNotFoundError:
     try:
         from cell import CubicCell
-        from moves import Kink, CrankShaft
+        from moves import Kink, CrankShaft, Pin
         from consts import rot
     except:
         from .cell import CubicCell
-        from .moves import Kink, CrankShaft
+        from .moves import Kink, CrankShaft, Pin
         from .consts import rot
 # except:
 #     from  sim.cell import  CubicCell
@@ -29,24 +29,21 @@ class Polymer:
     represents a ring polymer on a cubic grid
     """
 
-    def __init__(self, n,  cell, *args):
+    def __init__(self, n,  cell_, *args):
         """
         polymer init
         """
         self.n = n
-        self.cell = cell
-        # self.kink = None
+        self.cell = cell_
 
-        print(args)
+        # print(args)
         print([move.__str__() for move in args])
 
-        # if 'kink' in args:
-        # self.kink = kink
         self.coords_tmp = None
         self.coords = self.set_init_coords()
 
         for move in args:
-            name = move.__str__()
+            name = 'move_'+move.__str__()
             setattr(self, name, move)
 
         # self.kink.coordinates = self.coords
@@ -56,9 +53,8 @@ class Polymer:
 
 
     def __str__(self):
-
         msg = 40*"X" + """\nring polymer with %i beads\nconfined into the cell with dimensions (%i,%i,%i)\nmoves registered are: %s\n"""\
-               %(self.n, self.cell.A, self.cell.B, self.cell.C, [self.kink,self.crankshaft]) +\
+               %(self.n, self.cell.A, self.cell.B, self.cell.C, [move  for  move in dir(self) if 'move_' in move]) +\
               40*"X"
 
         return msg
@@ -146,7 +142,7 @@ class Polymer:
 
         i0, i1, i2, i3 = self._make_circular_indexes()
 
-        print(i0, i1, i2, i3)
+        # print(i0, i1, i2, i3)
         c[:, i0] = (np.array([0, 1, 0]) + init_point).reshape(3, 1)
         c[:, i1] = (np.array([1, 1, 0]) + init_point).reshape(3, 1)
         c[:, i2] = (np.array([0, 0, 0]) + init_point).reshape(3, 1)
@@ -209,36 +205,13 @@ class Polymer:
 
         rotation_sequence = self.generate_x_rotation_seq()
         rotation = rot[:, :, 1] #self._make_rotation_matrices()[:, :, 1]
-        print("rotation_sequence", rotation_sequence)
+        # print("rotation_sequence", rotation_sequence)
 
         for i in range(len(rotation_sequence)):
             for j in range(rotation_sequence[i]):
                 self.coords = self.unroll_move(i + 1, self.n - i - 2, rotation)
 
         return self.coords
-
-
-    # @staticmethod
-    # def _make_rotation_matrices():
-    #     """
-    #         prepares rotation matrices
-    #
-    #     :return: returns 6 matrices with rotations around X,Y,Z axis on plus/minus 90 degrees.
-    #     :rtype: (3,3,6) numpy array
-    #     """
-    #
-    #     rot_z_1 = np.array([0, -1, 0, 1, 0, 0, 0, 0, 1]).reshape(3, 3, 1)
-    #     rot_z_2 = np.array([0, 1, 0, -1, 0, 0, 0, 0, 1]).reshape(3, 3, 1)
-    #
-    #     rot_x_1 = np.array([1, 0, 0, 0, 0, -1, 0, 1, 0]).reshape(3, 3, 1)
-    #     rot_x_2 = np.array([1, 0, 0, 0, 0, 1, 0, -1, 0]).reshape(3, 3, 1)
-    #
-    #     rot_y_1 = np.array([0, 0, 1, 0, 1, 0, -1, 0, 0]).reshape(3, 3, 1)
-    #     rot_y_2 = np.array([0, 0, -1, 0, 1, 0, 1, 0, 0]).reshape(3, 3, 1)
-    #
-    #     rot = np.concatenate([rot_x_1, rot_x_2, rot_y_1, rot_y_2, rot_z_1, rot_z_2], axis=2)
-    #
-    #     return rot
 
 
 
@@ -254,25 +227,30 @@ if __name__ == "__main__":
     crankshaft = CrankShaft()
     print(crankshaft)
 
-    polymer = Polymer(20, cell, kink, crankshaft)
-    print(polymer)
+    pin = Pin()
+    print(pin)
 
+
+    polymer = Polymer(20, cell, kink, crankshaft, pin)
+    print(polymer)
+    print('squashed coordinates are:')
     print(polymer.get_coords())
 
-
+    print('unrolled coordinates are:')
     print(polymer.unroll_chain())
-    print('polymer coords\n', polymer.coords)
+    # print('polymer coords\n', polymer.coords)
 
 
+    print('kinking...')
     kink.coordinates = polymer.coords#.copy()
-    polymer.coords =  polymer.kink.getOutput(100)
-    print("res\n", polymer.coords)
+    polymer.coords =  polymer.move_kink.getOutput(100)
+    print(polymer.coords)
 
-
+    print('crankshafting...')
     crankshaft.coordinates = polymer.coords
-    print(polymer.crankshaft.getOutput(10))
+    polymer.coords = polymer.move_crankshaft.getOutput(100)
 
-    print("res\n", polymer.coords)
+    print(polymer.coords)
 
 
 
