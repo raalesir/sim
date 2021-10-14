@@ -101,8 +101,11 @@ class  CrankShaft(Move):
 
         potentials = []  # if this list is empty, it means that it the  chosen bead `crank` has to buddy
         # to form the rotation axis
-        while not potentials:
+        n_attempts = 0
+        while  n_attempts<self.length:
             # selecting random bead
+            n_attempts+=1
+
             crank = np.random.randint(self.length)
             #     print(crank)
 
@@ -115,13 +118,14 @@ class  CrankShaft(Move):
                                         (potentials_y, [2, 3]),
                                         (potentials_z, [4, 5])] if len(el[0]) > 0
                           ]
+            if potentials:
+                # selecting the axis with rotatios
+                axis_rotation = random.choice(potentials)
+                crank1 = random.choice(axis_rotation[0])
+                rotation = random.choice(axis_rotation[1])  # index in the list of rotation matrices
+                return crank, crank1, rotation
 
-            # selecting the axis with rotatios
-            axis_rotation = random.choice(potentials)
-            crank1 = random.choice(axis_rotation[0])
-            rotation = random.choice(axis_rotation[1])  # index in the list of rotation matrices
-
-        return crank, crank1, rotation
+        return None, None, None
 
 
 
@@ -142,7 +146,8 @@ class  CrankShaft(Move):
 
         for i in range(n_steps):
             crank, crank1, rotation = self.prepare_crank()
-            self.coordinates = self.crankshaft_move(crank, crank1, rot[:, :, rotation])
+            if crank:
+                self.coordinates = self.crankshaft_move(crank, crank1, rot[:, :, rotation])
 
         return self.coordinates
 
@@ -189,11 +194,7 @@ class Pin(Move):
 
         new_position_delta = random.choice([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 
-        # tmp = self.coordinates[:, pin] - self.coordinates[:, pin_minus]
-
-
         self.coordinates[:, pin] = self.coordinates[:, pin_minus] + new_position_delta
-        # print(self.coordinates[:, pin].shape, new_position_delta)
 
         return  self.coordinates
 
@@ -206,11 +207,11 @@ class Pin(Move):
         :rtype: tuple of int
         """
 
-        the_same = False
+        # the_same = False
         n_attempts = 0
         # pin_ = None
 
-        while ((not the_same) & (n_attempts < 100)):
+        while  (n_attempts < self.length):
 
             pin = np.random.randint(self.length)
 
@@ -218,12 +219,12 @@ class Pin(Move):
             pin_plus = pin + 1
 
             if pin == 0:
-                pin_minus = self.length - 1
-            elif pin == self.length - 1:
+                pin_minus = self.length-1
+            elif pin == self.length -1:
                 pin_plus = 0
 
             if np.array_equal(self.coordinates[:, pin_minus], self.coordinates[:, pin_plus]):
-                the_same = True
+                # the_same = True
                 return pin,  pin_plus, pin_minus
 
             n_attempts +=1
@@ -260,8 +261,8 @@ class Kink(Move):
 
         for i in range(n_steps):
             kink, kink_minus, kink_plus = self.prepare_kink()
-
-            self.coordinates = self.kink_move(kink, kink_minus, kink_plus)
+            if kink:
+                self.coordinates = self.kink_move(kink, kink_minus, kink_plus)
 
         return self.coordinates
 
@@ -310,10 +311,11 @@ class Kink(Move):
         :rtype: tuple of int
         """
 
-        orthogonal = False
+        n_attempts = 0
 
-        while not orthogonal:
-
+        while n_attempts < self.length:
+            n_attempts = n_attempts+1
+            # print('make %i kinks' %n_attempts)
             kink = np.random.randint(self.length)
 
             kink_minus = kink - 1
@@ -329,8 +331,10 @@ class Kink(Move):
             v1 = self.coordinates[:, kink] - self.coordinates[:, kink_minus]
             v2 = self.coordinates[:, kink_plus] - self.coordinates[:, kink]
 
-            orthogonal = np.dot(v1, v2) == 0
+            if np.dot(v1, v2) == 0:
+                return kink, kink_minus, kink_plus
 
-        return kink, kink_minus, kink_plus
+        # print('%i kinks'% self.length)
+        return None, None, None
 
 
