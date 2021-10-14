@@ -14,55 +14,74 @@ import random
 
 try:
     from sim.consts import N
-    from sim.aux import *
+    from sim.cell import CubicCell
+    # from sim.aux import *
+    from sim.moves import Kink, CrankShaft, Pin
+    from sim.polymer import Polymer
 
 except ModuleNotFoundError:
+    from cell import CubicCell
+
     from consts import  N
-    from aux import *
+    # from aux import *
+    from moves import Kink,CrankShaft, Pin
+    from polymer import Polymer
+
+
+
+
+def run_simulation():
+    """
+    running the  simulation
+    :return:
+    :rtype:
+    """
+    cell = CubicCell(6, 10, 6)
+    print(cell)
+    print(cell.get_center())
+
+    kink = Kink()
+    print(kink)
+    crankshaft = CrankShaft()
+    print(crankshaft)
+
+    pin = Pin()
+    print(pin)
+
+    polymer = Polymer(N, cell, kink, crankshaft, pin)
+    print(polymer)
+    print('squashed coordinates are:')
+    print(polymer.get_coords())
+
+    print('unrolled coordinates are:')
+    print(polymer.unroll_chain())
+
+
+    for step in range(1000):
+        coords_save = polymer.coords.copy()
+        rnd = random.random()
+        if rnd < 0.4:
+            crankshaft.coordinates = polymer.coords
+            polymer.coords_tmp = polymer.move_crankshaft.getOutput(1)
+        elif (rnd > 0.4) & (rnd < 0.7):
+            kink.coordinates = polymer.coords  #
+            polymer.coords_tmp = polymer.move_kink.getOutput(1)
+        else:
+            #         print('pin')
+            pin.coordinates = polymer.coords
+            polymer.coords_tmp = polymer.move_pin.getOutput(1)
+
+        if polymer.check_borders() & polymer.check_overlap():
+            polymer.coords = polymer.coords_tmp.copy()
+
+        else:
+            polymer.coords = coords_save
+
+    print("after  moves")
+    print(polymer.coords)
 
 
 
 if __name__ == "__main__":
 
-    print(N)
-
-    coords = make_circular_chain(N)
-    rotation_sequence = generate_x_rotation_seq(N)
-    print(rotation_sequence)
-
-    rotation_matrices = make_rotation_matrices()
-
-    coords = unroll_chain(coords, rotation_sequence, rotation_matrices[:, :, 1])
-
-    print(coords)
-
-    print('kinking')
-    coords = run_kinks(coords, 10000)
-    print(coords)
-
-    # print("running crankshafts")
-    # coords  = run_crankshafts(coords, 10, rotation_matrices)
-    # print(coords)
-    print("checking borders")
-    print(check_borders(coords))
-
-    print("running crankshafts")
-
-    for  step in range(10000):
-        coords_save = coords.copy()
-        if random.random() < 0.2:
-            coords_tmp = run_crankshafts(coords, 1, rotation_matrices)
-        else:
-            coords_tmp = run_kinks(coords, 1)
-
-        if check_borders(coords_tmp):
-            coords = coords_tmp
-            # print('post check', check_borders(coords))
-
-        else:
-            coords = coords_save
-
-    print("checking borders")
-    print(check_borders(coords))
-
-
+    run_simulation()
