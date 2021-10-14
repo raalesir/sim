@@ -71,6 +71,27 @@ class Overlap:
                 res.append((i, j, self.n // 2 - i - j))
         return res
 
+
+    def make_step(self, tup):
+        """
+        encodes  single index
+        :return:
+        :rtype:
+        """
+        res = []
+        d = {}
+        d['i+'] = tup[0]
+        d['i-'] = tup[0]
+        d['j+'] = tup[1]
+        d['j-'] = tup[1]
+        d['k+'] = tup[2]
+        d['k-'] = tup[2]
+
+        res.append(d)
+
+        return res
+
+
     def make_steps(self):
         """
         encodes indexes in dict
@@ -94,11 +115,42 @@ class Overlap:
         """
         Overlap.keep_result.all.append(data)
 
+
     def calculate_all_conformations(self):
         Overlap.keep_result.all = []
 
         for entry in self.dict:
             self.fun(entry, '')
+
+
+    def encode_single_conformation(self, conformation):
+        """
+
+        :param conformation:
+        :type conformation:
+        :return:
+        :rtype:
+        """
+
+        conf_encoded = []
+        start = [0, 0, 0]
+        for symbol in [conformation[i:i + 2] for i in range(0, len(conformation), 2)]:
+            if symbol == 'k+':
+                start[2] += 1
+            elif symbol == 'k-':
+                start[2] -= 1
+            elif symbol == 'i+':
+                start[0] += 1
+            elif symbol == 'i-':
+                start[0] -= 1
+            elif symbol == 'j+':
+                start[1] += 1
+            elif symbol == 'j-':
+                start[1] -= 1
+            conf_encoded.append(tuple(start.copy()))
+
+        return conf_encoded
+
 
     def encode_to_coords(self):
         """
@@ -127,6 +179,8 @@ class Overlap:
 
         self.encoded_conformations = res
 
+
+
     def get_overlaps(self):
         """
         """
@@ -137,6 +191,7 @@ class Overlap:
         counts = Counter(overlaps)
 
         self.overlaps_hist = dict(counts)
+
 
     def get_overlaps_histogram(self):
 
@@ -159,7 +214,10 @@ class Overlap:
         if not os.path.isfile(fname):
             json.dump(self.overlaps_hist, open(fname, 'w'))
 
+
     def plot_overlaps_histogram(self):
+
+        self.overlaps_hist = dict(zip(self.overlaps_hist.keys(), [v/sum(self.overlaps_hist.values()) for v in self.overlaps_hist.values()]))
         plt.bar(self.overlaps_hist.keys(), self.overlaps_hist.values())
         plt.yscale('log')
         plt.xlabel('number of overlaps')
