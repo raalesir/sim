@@ -314,7 +314,7 @@ class Kink(Move):
         n_attempts = 0
 
         while n_attempts < self.length:
-            n_attempts = n_attempts+1
+            n_attempts += 1
             # print('make %i kinks' %n_attempts)
             kink = np.random.randint(self.length)
 
