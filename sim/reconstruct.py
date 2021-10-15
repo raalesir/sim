@@ -7,7 +7,7 @@
 import  numpy as  np
 import  random
 from scipy.optimize import minimize
-
+import  matplotlib.pyplot as plt
 
 
 class Reconstruction:
@@ -188,6 +188,20 @@ class Reconstruction:
         return delta, sigmas, ress, noise, s
 
 
+    @staticmethod
+    def unroll_indexes(idx):
+        """
+        unrolls  [192, [172, [94, [70]]]]  to [192, 172, 94, 70] """
+
+        go = True
+        unrolled_indexes = []
+        while go:
+            unrolled_indexes.append(idx[0])
+            if len(idx) > 1:
+                idx = idx[1]
+            else:
+                go = False
+        return unrolled_indexes
 
 
     @staticmethod
@@ -195,20 +209,6 @@ class Reconstruction:
         """
         returns the first  set (if many) of coordinate  indexes having the minimal mutual distance
         """
-
-        def unroll_indexes(idx):
-            """
-            unrolls  [192, [172, [94, [70]]]]  to [192, 172, 94, 70] """
-
-            go = True
-            unrolled_indexes = []
-            while go:
-                unrolled_indexes.append(idx[0])
-                if len(idx) > 1:
-                    idx = idx[1]
-                else:
-                    go = False
-            return unrolled_indexes
 
 
         def find_beads2(current_node, search_space, found):
@@ -251,7 +251,7 @@ class Reconstruction:
             #         print(len(node_most_child), depth)
             #         print(node_most_child)
 
-            ids = unroll_indexes(depth)
+            ids = Reconstruction.unroll_indexes(depth)
             if len(ids) >= len(max_depth):
                 max_depth = ids
                 collect_deepest.append(ids)
@@ -261,6 +261,29 @@ class Reconstruction:
         return deepest #random.choice(deepest)
 
 
+    @staticmethod
+    def plot_rmse(rmse):
+
+        plt.figure(figsize=(16, 12))
+
+        for key in rmse:
+            min_dist = key.split(' ')[1]
+            #     sigmas_ = [el/float(min_dist) for el in sigmas]
+            t = [el / float(min_dist) for el in rmse[key]]
+            sigmas = np.linspace(0, 0.5, 20)
+
+            plt.plot(sigmas, t, linewidth=5, label=key)
+
+        plt.title("Relative deviation of disturbed from reconstructed  structures", fontsize=20)
+        plt.xlabel(r"$\sigma/d_{min}$", fontsize=20)
+        plt.ylabel("$RMSE/d_{min}$ from the original structure", fontsize=20)
+        plt.grid()
+        # plt.xlim(0,0.4)
+        # plt.ylim(0, 1)
+        # plt.xscale('log')
+
+        plt.legend()
+        plt.savefig('loss1.png')
 
 
 
@@ -322,8 +345,9 @@ if __name__ ==  "__main__":
     print(r.distance_matrix)
     # r.filter_distance_matrix(cutoff=100)
     # print(r.distance_matrix)
-    coarse_coordinates = r.create_coarse_coords(range(1, 50, 10))
-    print(r.create_rsme(coarse_coordinates))
+    coarse_coordinates = r.create_coarse_coords(range(1, 100, 10))
+    rmse = r.create_rsme(coarse_coordinates)
+    r.plot_rmse(rmse)
 
 
 
