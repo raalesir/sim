@@ -6,6 +6,8 @@
 """
 import  numpy as  np
 import  random
+from scipy.optimize import minimize
+
 
 
 class Reconstruction:
@@ -75,14 +77,116 @@ class Reconstruction:
 
         coarse_coords = {}
         for cutoff_ in cutoff_list:
-            top, bottom = np.nonzero(self.distance_matrix)
+
+            d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
+            top, bottom = np.nonzero(d)
+
             el_top = sorted(np.unique(top))[::-1]
 
             coarse_indexes = self.get_max_coarse_grained_beads(el_top, top, bottom)
-            print(len(coarse_indexes))
+            print(cutoff_, len(coarse_indexes), len(coarse_indexes[0]))
             coarse_coords[cutoff_] = self.coords[:, coarse_indexes]
 
         return coarse_coords
+
+
+    def create_rsme(self,  coarse_coords):
+        rmse = {}
+        for cutoff_ in coarse_coords:
+            print('the cutoff is %f; M=%i' % (cutoff_, coarse_coords[cutoff_][0].shape[1]))
+            # d = dist(coarse_coords[cutoff_], cut=False)
+            d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
+            d = d + d.T
+
+            tmp = []
+            for series in range(10):
+                delta, sigmas, ress, noise, ss = Reconstruction.distance_noise_effects(d, np.sqrt(cutoff_))
+                processed_coords, precision = Reconstruction.align_results(ress)
+                tmp.append(precision)
+
+            rmse['d_min= ' + "{:.2f}".format(np.sqrt(cutoff_)) + ' ;__M=' + str(d.shape[0])] = np.array(tmp).mean(axis=0)
+
+        return rmse
+
+
+    @staticmethod
+    def loss_function(R, *args):
+
+        R = np.array(R).reshape((3, 3))
+        r0 = args[0]
+        r1 = args[1]
+        r1 = np.matmul(r1, R)
+        configuration_distance = sum([
+                                         np.dot(tmp, tmp) for tmp in r0 - r1
+                                         ])
+
+        return np.sqrt(configuration_distance / r0.shape[0])
+
+
+    @staticmethod
+    def align_results(raw_results):
+        processed = []
+        precision = [0]
+        processed.append(raw_results[0])
+        for i in range(1, len(raw_results)):
+            result = minimize(Reconstruction.loss_function, (1, 0, 0, 0, 1, 0, 0, 0, 1), args=(raw_results[0], raw_results[i]),
+                              method='CG')
+            #         print(result.fun, loss_function(np.diag((1,1,1)), raw_results[0], raw_results[i]))
+            precision.append(result.fun)
+            tmp = np.matmul(raw_results[i], result.x.reshape((3, 3)))
+            processed.append(tmp)
+        return processed, precision
+
+
+
+    @staticmethod
+    def make_m(d):
+        """
+        making Gram matrix from distance
+        """
+        N = d.shape[1]
+        m = np.zeros((N, N))
+
+        for i in range(N):
+            for j in range(N):
+                m[i, j] = (d[0, i] + d[j, 0] - d[i, j]) / 2.
+        return m
+
+
+    @staticmethod
+    def distance_noise_effects(d_, min_d):
+        """
+        learn how noise in the distance matrix affects the reconstructed distances
+        """
+
+        # difference with increasing the size of noise
+        mu = 0.0
+        delta = []
+        ress = []
+        N = d_.shape[1]
+        #     sigmas = np.arange(0, 3.0, 0.05)
+        sigmas = np.linspace(0, min_d / 2.0, 20)
+
+        for sigma in sigmas:
+            noise = np.random.normal(mu, sigma, size=(N, N))
+            np.fill_diagonal(noise, 0.0)
+            for i in range(N):
+                for j in range(noise.shape[0]):
+                    noise[i, j] = noise[j, i]
+                    #         print(noise)
+            tmp = np.sqrt(d_) + noise
+            tmp[tmp < 0] = 0
+            d_noise = np.multiply(tmp, tmp)
+            m = Reconstruction.make_m(d_noise)
+            u, s, vh = np.linalg.svd(m, full_matrices=False)
+            res = np.matmul(u, np.sqrt(np.diag(s)))[:, :3]
+            ress.append(res)
+            # d_recovered = dist(res.T, cut=False)
+            # d_recovered = d_recovered + d_recovered.T
+            # delta.append((np.sum(np.sqrt(d_)) - np.sum(np.sqrt(d_recovered))) / np.sum(np.sqrt(d_)) * 100)
+
+        return delta, sigmas, ress, noise, s
+
 
 
 
@@ -154,7 +258,7 @@ class Reconstruction:
 
         deepest = [el for el in collect_deepest if len(el) >= len(max_depth)]
 
-        return random.choice(deepest)
+        return deepest #random.choice(deepest)
 
 
 
@@ -212,12 +316,14 @@ if __name__ ==  "__main__":
          8.,  8.,  8.,  8.,  9., 10., 11., 11., 11., 11., 11., 11., 11.,
         12., 13., 14., 14., 14.]])
 
+
     r = Reconstruction(c)
     print(r)
     print(r.distance_matrix)
-    r.filter_distance_matrix(cutoff=100)
-    print(r.distance_matrix)
-    print(r.create_coarse_coords(range(1, 50, 4)))
+    # r.filter_distance_matrix(cutoff=100)
+    # print(r.distance_matrix)
+    coarse_coordinates = r.create_coarse_coords(range(1, 50, 10))
+    print(r.create_rsme(coarse_coordinates))
 
 
 
