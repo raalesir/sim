@@ -62,7 +62,7 @@ def prepare_simulation(a,b,c, n):
 
 
 
-def run_simulation(polymer, scatter, lines, show=False, n_steps = 1000) :
+def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000) :
     """
     running the  simulation
     :return:
