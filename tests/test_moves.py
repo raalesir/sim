@@ -7,9 +7,12 @@ import numpy as np
 
 
 try:
-    from sim import moves,consts, cell, polymer
+    from sim.sim import moves,consts, cell, polymer
 except ModuleNotFoundError:
-    from sim.sim import moves, cell, consts, polymer
+    try:
+        from sim import moves, cell, consts, polymer
+    except:
+        from .sim  import  moves, cell, consts, polymer
 
 
 def test_kink_move_pass():

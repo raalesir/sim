@@ -5,9 +5,9 @@
 # import pytest
 
 try:
-    from sim import overlaps
+    from sim.sim import overlaps
 except ModuleNotFoundError:
-    from  sim.sim import   overlaps
+    from  sim import   overlaps
 
 
 def test_n_conf():

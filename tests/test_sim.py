@@ -8,9 +8,9 @@ import  numpy as np
 
 from click.testing import CliRunner
 
-from sim import aux
-from sim import cli
-from sim.consts import N
+from sim.sim import aux
+from sim.sim import cli
+from sim.sim.consts import N
 
 
 
