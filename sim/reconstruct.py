@@ -43,7 +43,7 @@ class Reconstruction:
         d = np.zeros((n, n))
         for i in range(n):
             for j in range(i):
-                tmp = c[:, i] - c[:, j]
+                tmp = self.coords[:, i] - self.coords[:, j]
                 d[i, j] = np.dot(tmp, tmp)
         # if cut:
         #     # print('cutoff %i' % cutoff)
@@ -284,6 +284,7 @@ class Reconstruction:
 
         plt.legend()
         plt.savefig('loss1.png')
+        plt.show()
 
 
 
