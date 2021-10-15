@@ -4,7 +4,7 @@ Constants
 """
 import  numpy as np
 
-N =  96
+N =  20
 A = 8 # depth and height of the bounding box
 B = 20  # length of the bounding box
 
