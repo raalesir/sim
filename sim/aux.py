@@ -8,7 +8,7 @@ import  random
 try:
     from sim.consts import N, A, B
 except ModuleNotFoundError:
-    from consts import N, A, B
+    from .consts import N, A, B
 
 
 
