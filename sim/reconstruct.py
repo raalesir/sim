@@ -9,6 +9,8 @@ import  random
 from scipy.optimize import minimize
 import  matplotlib.pyplot as plt
 
+from sim.sim.aux import loss_function, make_m
+
 
 class Reconstruction:
     """
@@ -121,66 +123,62 @@ class Reconstruction:
             # d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
             d = d + d.T
 
-            tmp = []
+            tmp_precision = []
+            tmp_processed_coords =  []
             c_off = np.sqrt(cutoff_)
-            for series in range(10):
+            for series in range(1):
                 delta, sigmas, ress, noise, ss = Reconstruction.distance_noise_effects(d, c_off)
+                print('ress', ress)
                 processed_coords, precision = Reconstruction.align_results(ress)
-                tmp.append(precision)
+                tmp_precision.append(precision)
+                tmp_processed_coords.append(processed_coords)
 
-            rmse['d_min= ' + "{:.2f}".format(c_off) + ' ;__M=' + str(coarse_coords[cutoff_][0].shape[1])] = np.array(tmp).mean(axis=0)
+            rmse['d_min= ' + "{:.2f}".format(c_off) + ' ;__M=' + str(coarse_coords[cutoff_][0].shape[1])] = \
+                np.array(tmp_precision).mean(axis=0), np.array(tmp_processed_coords).mean(axis=0)
+
 
         return rmse
 
 
-    @staticmethod
-    def loss_function(R, *args):
-
-        R = np.array(R).reshape((3, 3))
-        r0 = args[0]
-        r1 = args[1]
-        r1 = np.matmul(r1, R)
-        configuration_distance = sum([
-                                         np.dot(tmp, tmp) for tmp in r0 - r1
-                                         ])
-
-        return np.sqrt(configuration_distance / r0.shape[0])
-
 
     @staticmethod
     def align_results(raw_results):
+        """
+
+        :param raw_results: list  of restored coordinates of the same config as a function of `sigma`
+        :type raw_results: list
+        :return: tuple of lists with aligned coords and corresponding precision
+        :rtype: tuple
+        """
         processed = []
         precision = [0]
         processed.append(raw_results[0])
         for i in range(1, len(raw_results)):
-            result = minimize(Reconstruction.loss_function, (1, 0, 0, 0, 1, 0, 0, 0, 1), args=(raw_results[0], raw_results[i]),
+            result = minimize(loss_function, (0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0), args=(raw_results[0], raw_results[i]),
                               method='CG')
             #         print(result.fun, loss_function(np.diag((1,1,1)), raw_results[0], raw_results[i]))
             precision.append(result.fun)
-            tmp = np.matmul(raw_results[i], result.x.reshape((3, 3)))
+            res = result.x.reshape((4, 3))
+            rot  = res[:3,:] # rotation matrix
+            v = res[-1, :] # parallel transfer
+            tmp = np.matmul(raw_results[i], rot) + v
+
             processed.append(tmp)
         return processed, precision
 
 
 
     @staticmethod
-    def make_m(d):
-        """
-        making Gram matrix from distance
-        """
-        N = d.shape[1]
-        m = np.zeros((N, N))
-
-        for i in range(N):
-            for j in range(N):
-                m[i, j] = (d[0, i] + d[j, 0] - d[i, j]) / 2.
-        return m
-
-
-    @staticmethod
     def distance_noise_effects(d_, min_d):
         """
-        learn how noise in the distance matrix affects the reconstructed distances
+            learn how noise in the distance matrix affects the reconstructed distances
+
+        :param d_: square matrix with distances squared
+        :type d_: numpy 2D  array, float
+        :param min_d: minimal distance used to filter the  matrix
+        :type min_d: float
+        :return:
+        :rtype:
         """
 
         # difference with increasing the size of noise
@@ -192,6 +190,7 @@ class Reconstruction:
         sigmas = np.linspace(0, min_d / 2.0, 20)
 
         for sigma in sigmas:
+            print('sigmma', sigma)
             noise = np.random.normal(mu, sigma, size=(N, N))
             np.fill_diagonal(noise, 0.0)
             for i in range(N):
@@ -201,9 +200,9 @@ class Reconstruction:
             tmp = np.sqrt(d_) + noise
             tmp[tmp < 0] = 0
             d_noise = np.multiply(tmp, tmp)
-            m = Reconstruction.make_m(d_noise)
+            m = make_m(d_noise)
             u, s, vh = np.linalg.svd(m, full_matrices=False)
-            res = np.matmul(u, np.sqrt(np.diag(s)))[:, :3]
+            res = np.matmul(u, np.sqrt(np.diag(s)))[:, :3] # dim  = (M,3)  instead of (3,M)
             ress.append(res)
             # d_recovered = dist(res.T, cut=False)
             # d_recovered = d_recovered + d_recovered.T
