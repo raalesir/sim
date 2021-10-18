@@ -117,7 +117,7 @@ class Reconstruction:
         rmse = {}
         for cutoff_ in coarse_coords:
             print('the cutoff is %f; M=%i' % (cutoff_, coarse_coords[cutoff_][0].shape[1]))
-            print(coarse_coords[cutoff_][0].shape)
+            # print(coarse_coords[cutoff_][0].shape)
             d = Reconstruction.dist(coarse_coords[cutoff_][0])
             # print(d)
             # d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
@@ -126,9 +126,9 @@ class Reconstruction:
             tmp_precision = []
             tmp_processed_coords =  []
             c_off = np.sqrt(cutoff_)
-            for series in range(1):
+            for series in range(10):
                 delta, sigmas, ress, noise, ss = Reconstruction.distance_noise_effects(d, c_off)
-                print('ress', ress)
+                # print('ress', ress)
                 processed_coords, precision = Reconstruction.align_results(ress)
                 tmp_precision.append(precision)
                 tmp_processed_coords.append(processed_coords)
@@ -167,6 +167,18 @@ class Reconstruction:
         return processed, precision
 
 
+    @staticmethod
+    def get_noise(x, y, A, M,  n_T=2):
+        """
+        returns periodic noise
+        with given amplitude
+        """
+
+        xx, yy = np.meshgrid(x, y)
+        res = np.random.normal(0, A , size=(M, M)) + \
+              A * np.sin(n_T * 2 * np.pi * xx / M) * np.sin(n_T * 2 * np.pi * yy / M) + A
+        return res
+
 
     @staticmethod
     def distance_noise_effects(d_, min_d):
@@ -190,8 +202,9 @@ class Reconstruction:
         sigmas = np.linspace(0, min_d / 2.0, 20)
 
         for sigma in sigmas:
-            print('sigmma', sigma)
-            noise = np.random.normal(mu, sigma, size=(N, N))
+            # print('sigmma', sigma)
+            # noise = np.random.normal(mu, sigma, size=(N, N))
+            noise = Reconstruction.get_noise(np.arange(1,N+1), np.arange(1,N+1), sigma, N)
             np.fill_diagonal(noise, 0.0)
             for i in range(N):
                 for j in range(noise.shape[0]):
@@ -292,7 +305,7 @@ class Reconstruction:
         for key in rmse:
             min_dist = key.split(' ')[1]
             #     sigmas_ = [el/float(min_dist) for el in sigmas]
-            t = [el / float(min_dist) for el in rmse[key]]
+            t = [el / float(min_dist) for el in rmse[key][0]]
             sigmas = np.linspace(0, 0.5, 20)
 
             plt.plot(sigmas, t, linewidth=5, label=key)
