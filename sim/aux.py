@@ -361,3 +361,75 @@ def check_borders(c):
 
 def add(a,b):
     return a+b
+
+
+
+def distance_noise_effects(d_, min_d):
+    """
+        learn how noise in the distance matrix affects the reconstructed distances
+
+    :param d_: square matrix with distances squared
+    :type d_: numpy 2D  array, float
+    :param min_d: minimal distance used to filter the  matrix
+    :type min_d: float
+    :return:
+    :rtype:
+    """
+
+    # difference with increasing the size of noise
+    mu = 0.0
+    delta = []
+    ress = []
+    N = d_.shape[1]
+    #     sigmas = np.arange(0, 3.0, 0.05)
+    sigmas = np.linspace(0, min_d / 2.0, 20)
+
+    for sigma in sigmas:
+        noise = np.random.normal(mu, sigma, size=(N, N))
+        np.fill_diagonal(noise, 0.0)
+        for i in range(N):
+            for j in range(noise.shape[0]):
+                noise[i, j] = noise[j, i]
+                #         print(noise)
+        tmp = np.sqrt(d_) + noise
+        tmp[tmp < 0] = 0
+        d_noise = np.multiply(tmp, tmp)
+        m = Reconstruction.make_m(d_noise)
+        u, s, vh = np.linalg.svd(m, full_matrices=False)
+        res = np.matmul(u, np.sqrt(np.diag(s)))[:, :3]
+        ress.append(res)
+        # d_recovered = dist(res.T, cut=False)
+        # d_recovered = d_recovered + d_recovered.T
+        # delta.append((np.sum(np.sqrt(d_)) - np.sum(np.sqrt(d_recovered))) / np.sum(np.sqrt(d_)) * 100)
+
+    return delta, sigmas, ress, noise, s
+
+
+
+def loss_function(R, *args):
+
+        tmp = np.array(R).reshape((4, 3))
+        rot = tmp[:3,:]
+        v = tmp[-1, :]
+
+        r0 = args[0]
+        r1 = args[1] + v
+        r1 = v + np.matmul(r1-v, rot)
+        configuration_distance = sum([
+                                         np.dot(tmp, tmp) for tmp in r0 - r1
+                                         ])
+        return np.sqrt(configuration_distance / r0.shape[0])
+
+
+
+def make_m(d):
+    """
+    making Gram matrix from distance
+    """
+    N = d.shape[1]
+    m = np.zeros((N, N))
+
+    for i in range(N):
+        for j in range(N):
+            m[i, j] = (d[0, i] + d[j, 0] - d[i, j]) / 2.
+    return m
