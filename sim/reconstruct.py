@@ -76,6 +76,7 @@ class Reconstruction:
         """
 
         coarse_coords = {}
+        print('cutoff  | number of coords in the set | # of points in coords')
         for cutoff_ in cutoff_list:
 
             d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
@@ -104,7 +105,7 @@ class Reconstruction:
                 processed_coords, precision = Reconstruction.align_results(ress)
                 tmp.append(precision)
 
-            rmse['d_min= ' + "{:.2f}".format(np.sqrt(cutoff_)) + ' ;__M=' + str(d.shape[0])] = np.array(tmp).mean(axis=0)
+            rmse['d_min= ' + "{:.2f}".format(np.sqrt(cutoff_)) + ' ;__M=' + str(coarse_coords[cutoff_][0].shape[1])] = np.array(tmp).mean(axis=0)
 
         return rmse
 
@@ -346,7 +347,7 @@ if __name__ ==  "__main__":
     print(r.distance_matrix)
     # r.filter_distance_matrix(cutoff=100)
     # print(r.distance_matrix)
-    coarse_coordinates = r.create_coarse_coords(range(1, 100, 10))
+    coarse_coordinates = r.create_coarse_coords(range(1, 100, 20))
     rmse = r.create_rsme(coarse_coordinates)
     r.plot_rmse(rmse)
 
