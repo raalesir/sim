@@ -86,26 +86,49 @@ class Reconstruction:
 
             coarse_indexes = self.get_max_coarse_grained_beads(el_top, top, bottom)
             print(cutoff_, len(coarse_indexes), len(coarse_indexes[0]))
-            coarse_coords[cutoff_] = self.coords[:, coarse_indexes]
+
+            tmp = []
+            for subitem in coarse_indexes:
+                tmp.append(self.coords[:, subitem])
+            coarse_coords[cutoff_] = tmp
 
         return coarse_coords
+
+
+    @staticmethod
+    def dist(c):
+        """
+        squared distances from coordinates
+
+        """
+        n = c.shape[1]
+        d = np.zeros((n, n))
+        for i in range(n):
+            for j in range(i):
+                tmp = c[:, i] - c[:, j]
+                d[i, j] = np.dot(tmp, tmp)
+
+        return d
 
 
     def create_rsme(self,  coarse_coords):
         rmse = {}
         for cutoff_ in coarse_coords:
             print('the cutoff is %f; M=%i' % (cutoff_, coarse_coords[cutoff_][0].shape[1]))
-            # d = dist(coarse_coords[cutoff_], cut=False)
-            d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
+            print(coarse_coords[cutoff_][0].shape)
+            d = Reconstruction.dist(coarse_coords[cutoff_][0])
+            # print(d)
+            # d = np.where(self.distance_matrix >= cutoff_, self.distance_matrix, 0)
             d = d + d.T
 
             tmp = []
+            c_off = np.sqrt(cutoff_)
             for series in range(10):
-                delta, sigmas, ress, noise, ss = Reconstruction.distance_noise_effects(d, np.sqrt(cutoff_))
+                delta, sigmas, ress, noise, ss = Reconstruction.distance_noise_effects(d, c_off)
                 processed_coords, precision = Reconstruction.align_results(ress)
                 tmp.append(precision)
 
-            rmse['d_min= ' + "{:.2f}".format(np.sqrt(cutoff_)) + ' ;__M=' + str(coarse_coords[cutoff_][0].shape[1])] = np.array(tmp).mean(axis=0)
+            rmse['d_min= ' + "{:.2f}".format(c_off) + ' ;__M=' + str(coarse_coords[cutoff_][0].shape[1])] = np.array(tmp).mean(axis=0)
 
         return rmse
 
@@ -347,7 +370,8 @@ if __name__ ==  "__main__":
     print(r.distance_matrix)
     # r.filter_distance_matrix(cutoff=100)
     # print(r.distance_matrix)
-    coarse_coordinates = r.create_coarse_coords(range(1, 100, 20))
+    coarse_coordinates = r.create_coarse_coords(list(range(1, 100, 20))
+                                                )
     rmse = r.create_rsme(coarse_coordinates)
     r.plot_rmse(rmse)
 
