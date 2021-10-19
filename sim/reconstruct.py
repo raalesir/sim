@@ -8,6 +8,7 @@ import  numpy as  np
 import  random
 from scipy.optimize import minimize
 import  matplotlib.pyplot as plt
+import  sys
 
 from sim.sim.aux import loss_function, make_m
 
@@ -23,6 +24,7 @@ class Reconstruction:
         :param coords: 3D coords on cubic grid
         :type coords: Numpy array, int
         """
+        # np.set_printoptions(threshold=sys.maxsize)
 
         self.coords = coords
         self.distance_matrix = self.get_dist() # distance matrix
@@ -132,7 +134,6 @@ class Reconstruction:
                 processed_coords, precision = Reconstruction.align_results(ress)
                 tmp_precision.append(precision)
                 tmp_processed_coords.append(processed_coords)
-
             rmse['d_min= ' + "{:.2f}".format(c_off) + ' ;__M=' + str(coarse_coords[cutoff_][0].shape[1])] = \
                 np.array(tmp_precision).mean(axis=0), np.array(tmp_processed_coords).mean(axis=0)
 
@@ -168,15 +169,19 @@ class Reconstruction:
 
 
     @staticmethod
-    def get_noise(x, y, A, M,  n_T=2):
+    def get_sigmas(x, y, A, M,  n_T=1):
         """
         returns periodic noise
         with given amplitude
         """
 
         xx, yy = np.meshgrid(x, y)
-        res = np.random.normal(0, A , size=(M, M)) + \
-              A * np.sin(n_T * 2 * np.pi * xx / M) * np.sin(n_T * 2 * np.pi * yy / M) + A
+        res = np.abs(
+            # np.random.normal(0, A/10 , size=(M, M)) + \
+              A * np.sin(n_T * 2 * np.pi * xx / M) * np.sin(n_T * 2 * np.pi * yy / M)
+        )#+ A
+        res[np.abs(res) < 0.5*A] = 0
+
         return res
 
 
@@ -199,12 +204,16 @@ class Reconstruction:
         ress = []
         N = d_.shape[1]
         #     sigmas = np.arange(0, 3.0, 0.05)
-        sigmas = np.linspace(0, min_d / 2.0, 20)
+        sigmas = np.linspace(0, min_d / 2.0, 30)
 
         for sigma in sigmas:
             # print('sigmma', sigma)
             # noise = np.random.normal(mu, sigma, size=(N, N))
-            noise = Reconstruction.get_noise(np.arange(1,N+1), np.arange(1,N+1), sigma, N)
+            noise = np.random.normal(mu, Reconstruction.get_sigmas(
+                np.arange(1,N+1), np.arange(1,N+1), sigma, N
+            ), size=(N, N))
+
+            # noise = Reconstruction.get_noise(np.arange(1,N+1), np.arange(1,N+1), sigma*2, N)
             np.fill_diagonal(noise, 0.0)
             for i in range(N):
                 for j in range(noise.shape[0]):
@@ -306,9 +315,9 @@ class Reconstruction:
             min_dist = key.split(' ')[1]
             #     sigmas_ = [el/float(min_dist) for el in sigmas]
             t = [el / float(min_dist) for el in rmse[key][0]]
-            sigmas = np.linspace(0, 0.5, 20)
+            sigmas = np.linspace(0, 0.5, 30)
 
-            plt.plot(sigmas, t, linewidth=5, label=key)
+            plt.plot(sigmas, t, '.-',linewidth=5, label=key)
 
         plt.title("Relative deviation of disturbed from reconstructed  structures", fontsize=20)
         plt.xlabel(r"$\sigma/d_{min}$", fontsize=20)
