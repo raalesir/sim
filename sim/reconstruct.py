@@ -208,10 +208,10 @@ class Reconstruction:
 
         for sigma in sigmas:
             # print('sigmma', sigma)
-            # noise = np.random.normal(mu, sigma, size=(N, N))
-            noise = np.random.normal(mu, Reconstruction.get_sigmas(
-                np.arange(1,N+1), np.arange(1,N+1), sigma, N
-            ), size=(N, N))
+            noise = np.random.normal(mu, sigma, size=(N, N))
+            # noise = np.random.normal(mu, Reconstruction.get_sigmas(
+            #     np.arange(1,N+1), np.arange(1,N+1), sigma, N
+            # ), size=(N, N))
 
             # noise = Reconstruction.get_noise(np.arange(1,N+1), np.arange(1,N+1), sigma*2, N)
             np.fill_diagonal(noise, 0.0)
