@@ -240,17 +240,17 @@ if __name__ == "__main__":
     print(polymer.unroll_chain())
     # print('polymer coords\n', polymer.coords)
 
+    if hasattr(polymer, 'move_kink'):
+        print('kinking...')
+        kink.coordinates = polymer.coords#.copy()
+        polymer.coords =  polymer.move_kink.getOutput(100)
+        print(polymer.coords)
 
-    print('kinking...')
-    kink.coordinates = polymer.coords#.copy()
-    polymer.coords =  polymer.move_kink.getOutput(100)
-    print(polymer.coords)
-
-    print('crankshafting...')
-    crankshaft.coordinates = polymer.coords
-    polymer.coords = polymer.move_crankshaft.getOutput(100)
-
-    print(polymer.coords)
+    if hasattr(polymer, 'move_crankshaft'):
+        print('crankshafting...')
+        crankshaft.coordinates = polymer.coords
+        polymer.coords = polymer.move_crankshaft.getOutput(100)
+        print(polymer.coords)
 
 
 
