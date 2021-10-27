@@ -4,6 +4,8 @@ Auxiliary routines for  the modeler
 """
 import  numpy as  np
 import  random
+import  math
+
 
 try:
     from sim.consts import N, A, B
@@ -433,3 +435,27 @@ def make_m(d):
         for j in range(N):
             m[i, j] = (d[0, i] + d[j, 0] - d[i, j]) / 2.
     return m
+
+
+def n_conf(N, dx, dy, dz):
+    """
+    calculates the number of conformations  of ideal grid polymer given
+    number of bonds and displacements along the grid.
+    """
+
+    if ((N - dx - dy + dz) % 2 != 0) | ((N - dx - dy - dz) % 2 != 0):
+        return 0
+    else:
+
+        n_plus = int((N - dx - dy + dz) / 2)
+        n_minus = int((N - dx - dy - dz) / 2)
+
+        numerator = math.factorial(N)
+        res = 0.0
+        for x in range(n_minus + 1):
+            for y in range(n_minus - x + 1):
+                res += numerator / math.factorial(x) / math.factorial(x + dx) / math.factorial(y) / math.factorial(
+                    y + dy) / \
+                       math.factorial(n_plus - x - y) / math.factorial(n_minus - x - y)
+
+        return res
