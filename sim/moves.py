@@ -48,6 +48,9 @@ class Move:
         if 'n_steps' in kwargs:
             n_steps = kwargs['n_steps']
 
+        else:
+            n_steps=1
+
         self.length = self.coordinates.shape[1]
         self.output = self.make_move(n_steps)
         return  self.output
