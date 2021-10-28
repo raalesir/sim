@@ -66,7 +66,7 @@ class Rosenbluth(Move):
         return "rosenbluth"
 
 
-    def getOutput(self, a, b, i1, i2):
+    def getOutput(self, a, b, i1, i2, cached_counts):
         """
         regrows the chain betweeen the a and b
 
@@ -81,6 +81,8 @@ class Rosenbluth(Move):
         n_beads = abs(i1 -i2)
         # print(a,b,i1,i2, 'n_beads=', n_beads)
         # print(self.coordinates)
+
+
         def get_neighbours(N, dx, dy, dz):
             """
             returns all possible  next steps
@@ -88,20 +90,20 @@ class Rosenbluth(Move):
 
             r = []
             r.append([N - 1, dx + 1, dy, dz])
-            if dx > 0:
-                r.append([N - 1, dx - 1, dy, dz])
+            # if dx > 0:
+            r.append([N - 1, dx - 1, dy, dz])
 
             r.append([N - 1, dx, dy + 1, dz])
-            if dy > 0:
-                r.append([N - 1, dx, dy - 1, dz])
+            # if dy > 0:
+            r.append([N - 1, dx, dy - 1, dz])
 
             r.append([N - 1, dx, dy, dz + 1])
-            if dz > 0:
-                r.append([N - 1, dx, dy, dz - 1])
+            # if dz > 0:
+            r.append([N - 1, dx, dy, dz - 1])
 
             return r
 
-        def build_chain(N, dx, dy, dz, coords):
+        def build_chain(N, dx, dy, dz, coords, counts):
             """
             build chain between 2 ends
             """
@@ -110,19 +112,34 @@ class Rosenbluth(Move):
                 #         print('base case')
                 #         print("0,0,0,0")
                 return [[0, 0, 0]]
+                #         return
+
             else:
-                r = []
+                rr = []
                 neighbours = get_neighbours(N, dx, dy, dz)
                 for neighbour in neighbours:
-                    #         print(neighbour)
-                    r.append(n_conf(*neighbour))
-                    #         print('numbers for neighbours', r, neighbours)
-                l = [item / sum(r) for item in r]
-                #     print(l)
+                    if use_cache:
+                        try:
+                            t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
+                        except:
+                            t = n_conf(*neighbour)
+                            print('miss')
+                        rr.append(t)
+                    else:
+                        rr.append(n_conf(*neighbour))
+                try:
+                    l = [item / sum(rr) for item in rr]
+                except:
+                    l = [0 * len(rr)]
                 r = np.cumsum(l)
-                selected = neighbours[np.where(r > np.random.random())[0][0]]
-                #         print(selected)
-                c = [selected[1:]] + build_chain(*selected, selected[1:])
+                try:
+                    selected = neighbours[np.where(r > np.random.random())[0][0]]
+                    c = [selected[1:]] + build_chain(*selected, selected[1:], counts)
+                except:
+                    # no way to build chain
+                    print('no way to  build chain')
+                    selected = [1, 0, 0, 0]
+                    c = [selected[1:]] + build_chain(*selected, selected[1:], counts)
 
                 return c
 
@@ -148,8 +165,11 @@ class Rosenbluth(Move):
 
         dk, dl, dm = make_limits(a, b)
 
+        # cached_counts = cache_n_conf(n_beads, dk + 10, dl + 10, dm + 10)
+        use_cache = True
+
         tmp = np.array([[abs(dk), abs(dl), abs(dm)]] + \
-                               build_chain(n_beads, abs(dk), abs(dl), abs(dm), [])
+                               build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
                                )
 
         if dk < 0:
@@ -165,8 +185,8 @@ class Rosenbluth(Move):
         # for i in range(tmp.shape[0]):
         #     print(tmp[i], reverse(tmp)[i])
 
-        if random.random() < .5:
-            tmp = reverse(tmp)
+        # if random.random() < .5:
+        #     tmp = reverse(tmp)
 
 
         if (i1 < i2):
