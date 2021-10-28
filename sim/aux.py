@@ -462,3 +462,16 @@ def n_conf(N, dx, dy, dz):
 
         return res
 
+
+def cache_n_conf(N, dx, dy, dz):
+    """
+    caches the n_conf for each point on the grid given by dz, dy, dz
+    """
+    res = []
+    for n in range(N):
+        for i in range(dx):
+            for j in range(dy):
+                for k in range(dz):
+                    res.append(n_conf(n + 1, i, j, k))
+
+    return np.array(res).reshape(N, dx, dy, dz)  # .astype(int)
