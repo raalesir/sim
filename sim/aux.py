@@ -442,6 +442,8 @@ def n_conf(N, dx, dy, dz):
     calculates the number of conformations  of ideal grid polymer given
     number of bonds and displacements along the grid.
     """
+    dx = abs(dx); dy = abs(dy); dz = abs(dz)
+
 
     if ((N - dx - dy + dz) % 2 != 0) | ((N - dx - dy - dz) % 2 != 0):
         return 0
@@ -459,3 +461,4 @@ def n_conf(N, dx, dy, dz):
                        math.factorial(n_plus - x - y) / math.factorial(n_minus - x - y)
 
         return res
+
