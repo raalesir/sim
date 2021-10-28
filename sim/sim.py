@@ -16,7 +16,7 @@ import random
 try:
     # from sim.consts import N
     from sim.cell import CubicCell
-    # from sim.aux import *
+    from sim.aux import  cache_n_conf
     from sim.moves import Kink, CrankShaft, Pin, Rosenbluth
     from sim.polymer import Polymer
 
@@ -24,13 +24,14 @@ except ModuleNotFoundError:
     try:
         from cell import CubicCell
         # from consts import  N
-        # from aux import *
+        from aux import cache_n_conf
         from moves import Kink,CrankShaft, Pin, Rosenbluth
         from polymer import Polymer
     except:
         from .cell import  CubicCell
         from .moves import  Kink, CrankShaft,Pin, Rosenbluth
         from .polymer import Polymer
+        from .aux import  cache_n_conf
 
 
 def prepare_simulation(a,b,c, n):
@@ -68,12 +69,17 @@ def prepare_simulation(a,b,c, n):
 
 
 
+
+
+
 def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000):
     """
     running the  simulation
     :return:
     :rtype:
     """
+
+    cached_counts = cache_n_conf(polymer.n, polymer.cell.A, polymer.cell.B, polymer.cell.C)
 
     walks=[]
     for step in range(n_steps):
@@ -88,10 +94,10 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
             # print('stuck')
             ind2 = random.randint(0, polymer.coords.shape[1]-1)
 
-        a = polymer.coords[0, ind1], polymer.coords[1, ind1], polymer.coords[2, ind1]
-        b = polymer.coords[0, ind2], polymer.coords[1, ind2], polymer.coords[2, ind2]
+        a = int(polymer.coords[0, ind1]), int(polymer.coords[1, ind1]), int(polymer.coords[2, ind1])
+        b = int(polymer.coords[0, ind2]), int(polymer.coords[1, ind2]), int(polymer.coords[2, ind2])
         # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
-        polymer.coords_tmp = polymer.move_rosenbluth.getOutput(a,b, ind1, ind2)
+        polymer.coords_tmp = polymer.move_rosenbluth.getOutput(a,b, ind1, ind2, cached_counts)
         # print('diff\n ', repr(polymer.coords),  repr(polymer.coords_tmp))
 
 
