@@ -126,7 +126,7 @@ class Rosenbluth(Move):
                             t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
                         except:
                             t = n_conf(*neighbour)
-                            print('miss')
+                            print('miss. out of box? ', neighbour)
                         rr.append(t)
                     else:
                         rr.append(n_conf(*neighbour))
