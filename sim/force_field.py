@@ -20,6 +20,12 @@ class ForceField:
         self.f_r = self.get_value()
         self.amplitude = amplitude
 
+    def __str__(self):
+        if self.linear:
+            return 'linear'
+        else:
+            return 'Euclidean'
+
 
     def get_value(self):
         """
