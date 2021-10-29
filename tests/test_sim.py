@@ -10,7 +10,7 @@ from click.testing import CliRunner
 
 from sim.sim import aux
 from sim.sim import cli
-from sim.sim.consts import N
+from sim.sim.consts import N, A,B,C
 
 
 

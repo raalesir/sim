@@ -7,13 +7,13 @@ import  random
 import  math
 
 
-# try:
-#     from sim.consts import N, A, B
-# except ModuleNotFoundError:
-#     try:
-#         from consts import N, A,  B
-#     except:
-#         from .consts import N, A, B
+try:
+    from sim.consts import N, A, B, C
+except ModuleNotFoundError:
+    try:
+        from consts import N, A,  B, C
+    except:
+        from .consts import N, A, B, C
 
 
 
@@ -195,7 +195,7 @@ def settle_init_point():
     :return: initial position of the polymer,  (1,3) numpy array
     :rtype: int
     """
-    return np.array([A//2, B//2, A//2])
+    return np.array([A//2, B//2, C//2])
 
 
 
@@ -357,7 +357,7 @@ def check_borders(c):
     :rtype: bool
     """
 
-    if (np.max(c[0,:]) < A) & (np.max(c[1,:]) < B) & (np.max(c[2]) < A) &\
+    if (np.max(c[0,:]) < A) & (np.max(c[1,:]) < B) & (np.max(c[2]) < C) &\
         (np.min(c[0,:]) > 0) & (np.min(c[1,:]) >0) & (np.min(c[2]) >0):
         return True
     else:
