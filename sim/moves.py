@@ -177,34 +177,30 @@ class Rosenbluth(Move):
 
         dk, dl, dm = Rosenbluth.make_limits(a, b)
 
-        tmp = np.array([[abs(dk), abs(dl), abs(dm)]] + \
+        regrown_coords = np.array([[abs(dk), abs(dl), abs(dm)]] + \
                                Rosenbluth.build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
                                )
 
         if dk < 0:
-            tmp[:, 0] = -  tmp[:, 0]
+            regrown_coords[:, 0] = -  regrown_coords[:, 0]
         if dl < 0:
-            tmp[:, 1] = -  tmp[:, 1]
+            regrown_coords[:, 1] = -  regrown_coords[:, 1]
 
         if dm < 0:
-            tmp[:, 2] = -  tmp[:, 2]
+            regrown_coords[:, 2] = -  regrown_coords[:, 2]
 
-        tmp = tmp + np.array([a[0], a[1], a[2]])
-        # print("======")
-        # for i in range(tmp.shape[0]):
-        #     print(tmp[i], reverse(tmp)[i])
+        regrown_coords = regrown_coords + np.array([a[0], a[1], a[2]])
 
         # if random.random() < .5:
         #     tmp = reverse(tmp)
 
 
         if i1 < i2:
-            tmp = tmp.astype(float)[::-1].T
-            self.coordinates[:, i1:i2 + 1] = tmp.copy()
-
+            regrown_coords = regrown_coords.astype(float)[::-1].T
+            self.coordinates[:, i1:i2 + 1] = regrown_coords.copy()
         else:
-            tmp = tmp.astype(float).T
-            self.coordinates[:, i2:i1 + 1] = tmp.copy()
+            regrown_coords = regrown_coords.astype(float).T
+            self.coordinates[:, i2:i1 + 1] = regrown_coords.copy()
 
         # print(tmp[:,0], self.coordinates[:, i1], tmp[:,-1], self.coordinates[:, i2], tmp.shape, i1,i2)
 
