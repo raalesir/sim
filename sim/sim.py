@@ -34,6 +34,7 @@ except ModuleNotFoundError:
         from .aux import  cache_n_conf
 
 
+
 def prepare_simulation(a,b,c, n):
     """
     prepare simulation
@@ -70,36 +71,35 @@ def prepare_simulation(a,b,c, n):
 
 
 
-
-
-def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000):
+def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000, use_moves='all'):
     """
     running the  simulation
     :return:
     :rtype:
     """
-
+    print('caching  counts...')
     cached_counts = cache_n_conf(polymer.n, polymer.cell.A, polymer.cell.B, polymer.cell.C)
+    print('done')
 
     walks=[]
     for step in range(n_steps):
         coords_save = polymer.coords.copy()
-        rnd = random.random()
+        if hasattr(polymer, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
+            polymer.move_rosenbluth.coordinates = polymer.coords.copy()
 
-        polymer.move_rosenbluth.coordinates = polymer.coords.copy()
+            ind1 = random.randint(0, polymer.coords.shape[1]-1)
+            ind2 = ind1
+            while ind2 == ind1:
+                # print('stuck')
+                ind2 = random.randint(0, polymer.coords.shape[1]-1)
 
-        ind1 = random.randint(0, polymer.coords.shape[1]-1)
-        ind2 = ind1
-        while ind2 == ind1:
-            # print('stuck')
-            ind2 = random.randint(0, polymer.coords.shape[1]-1)
-
-        a = int(polymer.coords[0, ind1]), int(polymer.coords[1, ind1]), int(polymer.coords[2, ind1])
-        b = int(polymer.coords[0, ind2]), int(polymer.coords[1, ind2]), int(polymer.coords[2, ind2])
-        # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
-        polymer.coords_tmp = polymer.move_rosenbluth.getOutput(a,b, ind1, ind2, cached_counts)
+            a = int(polymer.coords[0, ind1]), int(polymer.coords[1, ind1]), int(polymer.coords[2, ind1])
+            b = int(polymer.coords[0, ind2]), int(polymer.coords[1, ind2]), int(polymer.coords[2, ind2])
+            # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
+            polymer.coords_tmp = polymer.move_rosenbluth.getOutput(a,b, ind1, ind2, cached_counts)
         # print('diff\n ', repr(polymer.coords),  repr(polymer.coords_tmp))
 
+        rnd = random.random()
 
         # if rnd < 0.4:
         #     # if hasattr(polymer, 'move_crankshaft'):
@@ -119,7 +119,7 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
         if polymer.check_borders() & polymer.check_overlap():
             polymer.coords = polymer.coords_tmp.copy()
             polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
-            if show & (step%50 == 0) :
+            if show & (step%100 == 0) :
                 # print('show')
                 scatter.x = polymer.coords[0, :];
                 scatter.y = polymer.coords[1, :];
