@@ -71,7 +71,7 @@ def prepare_simulation(a,b,c, n):
 
 
 
-def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000, use_moves='all'):
+def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000, use_moves=['move_rosenbluth']):
     """
     running the  simulation
     :return:

@@ -7,10 +7,13 @@ import  random
 import  math
 
 
-try:
-    from sim.consts import N, A, B
-except ModuleNotFoundError:
-    from .consts import N, A, B
+# try:
+#     from sim.consts import N, A, B
+# except ModuleNotFoundError:
+#     try:
+#         from consts import N, A,  B
+#     except:
+#         from .consts import N, A, B
 
 
 
@@ -461,6 +464,7 @@ def n_conf(N, dx, dy, dz):
                        math.factorial(n_plus - x - y) / math.factorial(n_minus - x - y)
 
         return res
+
 
 
 def cache_n_conf(N, dx, dy, dz):
