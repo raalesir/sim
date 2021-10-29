@@ -15,23 +15,26 @@ import random
 
 try:
     # from sim.consts import N
-    from sim.cell import CubicCell
+    from sim.cell import CubicCell, ForceCubicCell
     from sim.aux import  cache_n_conf
     from sim.moves import Kink, CrankShaft, Pin, Rosenbluth
     from sim.polymer import Polymer
+    from sim.force_field import  ForceField
 
 except ModuleNotFoundError:
     try:
-        from cell import CubicCell
+        from cell import CubicCell, ForceCubicCell
         # from consts import  N
         from aux import cache_n_conf
         from moves import Kink,CrankShaft, Pin, Rosenbluth
         from polymer import Polymer
+        from force_field import  ForceField
     except:
-        from .cell import  CubicCell
+        from .cell import  CubicCell, ForceCubicCell
         from .moves import  Kink, CrankShaft,Pin, Rosenbluth
         from .polymer import Polymer
         from .aux import  cache_n_conf
+        from .force_field import ForceField
 
 
 
@@ -41,9 +44,18 @@ def prepare_simulation(a,b,c, n):
     :return:
     :rtype:
     """
-    cell = CubicCell(a, b, c)
+
+    f_f = ForceField(linear=True)
+    f_f.origin = b
+    print(f_f)
+
+
+    # cell = CubicCell(a, b, c)
+    cell = ForceCubicCell(a,b,c, f_f)
     print(cell)
     print(cell.get_center())
+    print("the force origin is at: %s" %cell.f_f.origin)
+
 
     kink = Kink()
     print(kink)
@@ -71,7 +83,8 @@ def prepare_simulation(a,b,c, n):
 
 
 
-def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000, use_moves=['move_rosenbluth']):
+def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000,
+                   use_moves=['move_rosenbluth']):
     """
     running the  simulation
     :return:
@@ -82,6 +95,7 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
     print('done')
 
     walks=[]
+    distances=[]
     for step in range(n_steps):
         coords_save = polymer.coords.copy()
         if hasattr(polymer, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
@@ -127,14 +141,16 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
                 lines.z = polymer.coords[2, :];
                 t =  np.mean(polymer.coords, axis=1)
                 # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
+                dst  = polymer.cell.f_f.get_distance(t[1])
                 walks.append(t)
+                distances.append(dst)
         else:
             # print('outside')
             polymer.coords = coords_save
 
     print("after  moves")
     print(polymer.coords)
-    return walks
+    return walks, distances
 
 
 
