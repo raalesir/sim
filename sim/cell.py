@@ -44,3 +44,22 @@ class  CubicCell:
         :rtype: list
         """
         return  self.center
+
+
+
+
+class ForceCubicCell(CubicCell):
+    """
+    cubic cell with force field
+    """
+
+    def __init__(self, a,b ,c,  f_f):
+        self.f_f = f_f
+        super().__init__(a,b,c)
+
+
+    def __str__(self):
+        return """the cell is a parallelogram with the size (X,Y,Z) = (%i, %i, %i) and %s force field with the  origin at: %s"""\
+               %(self.A, self.B, self.C, self.f_f, self.f_f.origin)
+
+
