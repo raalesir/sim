@@ -61,12 +61,82 @@ class Rosenbluth(Move):
     """
     class  for regrowing chain between two points
     """
+    use_cache = True
 
     def __init__(self):
         super(Move, self).__init__()
 
+
     def __str__(self):
         return "rosenbluth"
+
+
+    @staticmethod
+    def get_neighbours(n, dx, dy, dz):
+        """
+        returns all possible  next steps
+        """
+        r = []
+        r.append([n - 1, dx + 1, dy, dz])
+        r.append([n - 1, dx - 1, dy, dz])
+
+        r.append([n - 1, dx, dy + 1, dz])
+        r.append([n - 1, dx, dy - 1, dz])
+
+        r.append([n - 1, dx, dy, dz + 1])
+        r.append([n - 1, dx, dy, dz - 1])
+
+        return r
+
+
+    @staticmethod
+    def make_limits(a_, b_):
+
+        k1, l1, m1 = a_
+        k2, l2, m2 = b_
+
+        return k2 - k1, l2 - l1, m2 - m1
+
+    @staticmethod
+    def build_chain(N, dx, dy, dz, coords, counts):
+        """
+        build chain between 2 ends
+        """
+
+        if N < 2:
+            #         print('base case')
+            #         print("0,0,0,0")
+            return [[0, 0, 0]]
+            #         return
+
+        else:
+            rr = []
+            neighbours = Rosenbluth.get_neighbours(N, dx, dy, dz)
+            for neighbour in neighbours:
+                if Rosenbluth.use_cache:
+                    try:
+                        t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
+                    except:
+                        t = n_conf(*neighbour)
+                        print('miss. out of box? ', neighbour)
+                    rr.append(t)
+                else:
+                    rr.append(n_conf(*neighbour))
+            try:
+                l = [item / sum(rr) for item in rr]
+            except:
+                l = [0 * len(rr)]
+            r = np.cumsum(l)
+            try:
+                selected = neighbours[np.where(r > np.random.random())[0][0]]
+                c = [selected[1:]] + Rosenbluth.build_chain(*selected, selected[1:], counts)
+            except:
+                # no way to build chain
+                print('no way to  build chain')
+                selected = [1, 0, 0, 0]
+                c = [selected[1:]] + Rosenbluth.build_chain(*selected, selected[1:], counts)
+
+            return c
 
 
     def getOutput(self, i1, i2, cached_counts):
@@ -92,67 +162,6 @@ class Rosenbluth(Move):
         b = int(self.coordinates[0, i2]), int(self.coordinates[1, i2]), int(self.coordinates[2, i2])
 
 
-        def get_neighbours(N, dx, dy, dz):
-            """
-            returns all possible  next steps
-            """
-
-            r = []
-            r.append([N - 1, dx + 1, dy, dz])
-            # if dx > 0:
-            r.append([N - 1, dx - 1, dy, dz])
-
-            r.append([N - 1, dx, dy + 1, dz])
-            # if dy > 0:
-            r.append([N - 1, dx, dy - 1, dz])
-
-            r.append([N - 1, dx, dy, dz + 1])
-            # if dz > 0:
-            r.append([N - 1, dx, dy, dz - 1])
-
-            return r
-
-        def build_chain(N, dx, dy, dz, coords, counts):
-            """
-            build chain between 2 ends
-            """
-
-            if N < 2:
-                #         print('base case')
-                #         print("0,0,0,0")
-                return [[0, 0, 0]]
-                #         return
-
-            else:
-                rr = []
-                neighbours = get_neighbours(N, dx, dy, dz)
-                for neighbour in neighbours:
-                    if use_cache:
-                        try:
-                            t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
-                        except:
-                            t = n_conf(*neighbour)
-                            print('miss. out of box? ', neighbour)
-                        rr.append(t)
-                    else:
-                        rr.append(n_conf(*neighbour))
-                try:
-                    l = [item / sum(rr) for item in rr]
-                except:
-                    l = [0 * len(rr)]
-                r = np.cumsum(l)
-                try:
-                    selected = neighbours[np.where(r > np.random.random())[0][0]]
-                    c = [selected[1:]] + build_chain(*selected, selected[1:], counts)
-                except:
-                    # no way to build chain
-                    print('no way to  build chain')
-                    selected = [1, 0, 0, 0]
-                    c = [selected[1:]] + build_chain(*selected, selected[1:], counts)
-
-                return c
-
-
         # def reverse(A):
         #     """
         #     reverses the trajectory with mirroring
@@ -166,19 +175,10 @@ class Rosenbluth(Move):
         #     return np.array(rev)[::-1]
 
 
-        def make_limits(a_,b_):
-            k1, l1, m1 = a_
-            k2, l2, m2 = b_
-
-            return k2 - k1, l2 - l1, m2 - m1
-
-        dk, dl, dm = make_limits(a, b)
-
-        # cached_counts = cache_n_conf(n_beads, dk + 10, dl + 10, dm + 10)
-        use_cache = True
+        dk, dl, dm = Rosenbluth.make_limits(a, b)
 
         tmp = np.array([[abs(dk), abs(dl), abs(dm)]] + \
-                               build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
+                               Rosenbluth.build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
                                )
 
         if dk < 0:
@@ -198,7 +198,7 @@ class Rosenbluth(Move):
         #     tmp = reverse(tmp)
 
 
-        if (i1 < i2):
+        if i1 < i2:
             tmp = tmp.astype(float)[::-1].T
             self.coordinates[:, i1:i2 + 1] = tmp.copy()
 
