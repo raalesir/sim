@@ -93,10 +93,10 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
                 # print('stuck')
                 ind2 = random.randint(0, polymer.coords.shape[1]-1)
 
-            a = int(polymer.coords[0, ind1]), int(polymer.coords[1, ind1]), int(polymer.coords[2, ind1])
-            b = int(polymer.coords[0, ind2]), int(polymer.coords[1, ind2]), int(polymer.coords[2, ind2])
+            # a = int(polymer.coords[0, ind1]), int(polymer.coords[1, ind1]), int(polymer.coords[2, ind1])
+            # b = int(polymer.coords[0, ind2]), int(polymer.coords[1, ind2]), int(polymer.coords[2, ind2])
             # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
-            polymer.coords_tmp = polymer.move_rosenbluth.getOutput(a,b, ind1, ind2, cached_counts)
+            polymer.coords_tmp = polymer.move_rosenbluth.getOutput(ind1, ind2, cached_counts)
         # print('diff\n ', repr(polymer.coords),  repr(polymer.coords_tmp))
 
         rnd = random.random()

@@ -69,21 +69,27 @@ class Rosenbluth(Move):
         return "rosenbluth"
 
 
-    def getOutput(self, a, b, i1, i2, cached_counts):
+    def getOutput(self, i1, i2, cached_counts):
         """
-        regrows the chain betweeen the a and b
+        regrows the chain betweeen the i1 and i2
 
-        :param a: triplet (k1, l1, m1) as starting point
-        :type a: tuple of integers
-        :param b: triplet(k2,l2,m2) as finishing point
-        :type b: tuple of integers
+        :param i1: start index  to regrow
+        :type i1: int
+        :param i2: last index to regrow
+        :type i2: int
+        :param cached_counts: Array with  cached number  of trajectories for given `N, k,l,m`
+        :type cached_counts:  4D numpy array
         :return: regrown coordinates
         :rtype: (3, N) Numpy array of integers
         """
+
         self.length = self.coordinates.shape[1]
         n_beads = abs(i1 -i2)
         # print(a,b,i1,i2, 'n_beads=', n_beads)
         # print(self.coordinates)
+
+        a = int(self.coordinates[0, i1]), int(self.coordinates[1, i1]), int(self.coordinates[2, i1])
+        b = int(self.coordinates[0, i2]), int(self.coordinates[1, i2]), int(self.coordinates[2, i2])
 
 
         def get_neighbours(N, dx, dy, dz):
@@ -147,17 +153,17 @@ class Rosenbluth(Move):
                 return c
 
 
-        def reverse(A):
-            """
-            reverses the trajectory with mirroring
-            """
-            diffs = np.diff(A, 1, axis=0)
-            rev = [A[-1]]
-
-            for d in diffs:
-                rev.append(rev[-1] - d)
-
-            return np.array(rev)[::-1]
+        # def reverse(A):
+        #     """
+        #     reverses the trajectory with mirroring
+        #     """
+        #     diffs = np.diff(A, 1, axis=0)
+        #     rev = [A[-1]]
+        #
+        #     for d in diffs:
+        #         rev.append(rev[-1] - d)
+        #
+        #     return np.array(rev)[::-1]
 
 
         def make_limits(a_,b_):
