@@ -143,3 +143,4 @@ def test_poolymer_check_borders_pass():
     res = polymer1.check_borders()
 
     assert res == True
+

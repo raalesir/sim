@@ -5,8 +5,9 @@ Constants
 import  numpy as np
 
 N =  20
-A = 8 # depth and height of the bounding box
+A = 8 # depth
 B = 20  # length of the bounding box
+C = 8
 
 
 def _make_rotation_matrices():

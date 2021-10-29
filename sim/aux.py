@@ -4,11 +4,16 @@ Auxiliary routines for  the modeler
 """
 import  numpy as  np
 import  random
+import  math
+
 
 try:
-    from sim.consts import N, A, B
+    from sim.consts import N, A, B, C
 except ModuleNotFoundError:
-    from .consts import N, A, B
+    try:
+        from consts import N, A,  B, C
+    except:
+        from .consts import N, A, B, C
 
 
 
@@ -190,7 +195,7 @@ def settle_init_point():
     :return: initial position of the polymer,  (1,3) numpy array
     :rtype: int
     """
-    return np.array([A//2, B//2, A//2])
+    return np.array([A//2, B//2, C//2])
 
 
 
@@ -352,7 +357,7 @@ def check_borders(c):
     :rtype: bool
     """
 
-    if (np.max(c[0,:]) < A) & (np.max(c[1,:]) < B) & (np.max(c[2]) < A) &\
+    if (np.max(c[0,:]) < A) & (np.max(c[1,:]) < B) & (np.max(c[2]) < C) &\
         (np.min(c[0,:]) > 0) & (np.min(c[1,:]) >0) & (np.min(c[2]) >0):
         return True
     else:
@@ -361,3 +366,116 @@ def check_borders(c):
 
 def add(a,b):
     return a+b
+
+
+
+def distance_noise_effects(d_, min_d):
+    """
+        learn how noise in the distance matrix affects the reconstructed distances
+
+    :param d_: square matrix with distances squared
+    :type d_: numpy 2D  array, float
+    :param min_d: minimal distance used to filter the  matrix
+    :type min_d: float
+    :return:
+    :rtype:
+    """
+
+    # difference with increasing the size of noise
+    mu = 0.0
+    delta = []
+    ress = []
+    N = d_.shape[1]
+    #     sigmas = np.arange(0, 3.0, 0.05)
+    sigmas = np.linspace(0, min_d / 2.0, 20)
+
+    for sigma in sigmas:
+        noise = np.random.normal(mu, sigma, size=(N, N))
+        np.fill_diagonal(noise, 0.0)
+        for i in range(N):
+            for j in range(noise.shape[0]):
+                noise[i, j] = noise[j, i]
+                #         print(noise)
+        tmp = np.sqrt(d_) + noise
+        tmp[tmp < 0] = 0
+        d_noise = np.multiply(tmp, tmp)
+        m = Reconstruction.make_m(d_noise)
+        u, s, vh = np.linalg.svd(m, full_matrices=False)
+        res = np.matmul(u, np.sqrt(np.diag(s)))[:, :3]
+        ress.append(res)
+        # d_recovered = dist(res.T, cut=False)
+        # d_recovered = d_recovered + d_recovered.T
+        # delta.append((np.sum(np.sqrt(d_)) - np.sum(np.sqrt(d_recovered))) / np.sum(np.sqrt(d_)) * 100)
+
+    return delta, sigmas, ress, noise, s
+
+
+
+def loss_function(R, *args):
+
+        tmp = np.array(R).reshape((4, 3))
+        rot = tmp[:3,:]
+        v = tmp[-1, :]
+
+        r0 = args[0]
+        r1 = args[1] + v
+        r1 = v + np.matmul(r1-v, rot)
+        configuration_distance = sum([
+                                         np.dot(tmp, tmp) for tmp in r0 - r1
+                                         ])
+        return np.sqrt(configuration_distance / r0.shape[0])
+
+
+
+def make_m(d):
+    """
+    making Gram matrix from distance
+    """
+    N = d.shape[1]
+    m = np.zeros((N, N))
+
+    for i in range(N):
+        for j in range(N):
+            m[i, j] = (d[0, i] + d[j, 0] - d[i, j]) / 2.
+    return m
+
+
+def n_conf(N, dx, dy, dz):
+    """
+    calculates the number of conformations  of ideal grid polymer given
+    number of bonds and displacements along the grid.
+    """
+    dx = abs(dx); dy = abs(dy); dz = abs(dz)
+
+
+    if ((N - dx - dy + dz) % 2 != 0) | ((N - dx - dy - dz) % 2 != 0):
+        return 0
+    else:
+
+        n_plus = int((N - dx - dy + dz) / 2)
+        n_minus = int((N - dx - dy - dz) / 2)
+
+        numerator = math.factorial(N)
+        res = 0.0
+        for x in range(n_minus + 1):
+            for y in range(n_minus - x + 1):
+                res += numerator / math.factorial(x) / math.factorial(x + dx) / math.factorial(y) / math.factorial(
+                    y + dy) / \
+                       math.factorial(n_plus - x - y) / math.factorial(n_minus - x - y)
+
+        return res
+
+
+
+def cache_n_conf(N, dx, dy, dz):
+    """
+    caches the n_conf for each point on the grid given by dz, dy, dz
+    """
+    res = []
+    for n in range(N):
+        for i in range(dx):
+            for j in range(dy):
+                for k in range(dz):
+                    res.append(n_conf(n + 1, i, j, k))
+
+    return np.array(res).reshape(N, dx, dy, dz)  # .astype(int)

@@ -68,8 +68,11 @@ class Polymer:
         :rtype: bool
         """
 
-        if (np.max(self.coords_tmp[0, :]) < self.cell.A) & (np.max(self.coords_tmp[1, :]) < self.cell.B) & (np.max(self.coords_tmp[2]) < self.cell.C) & \
-                (np.min(self.coords_tmp[0, :]) > 0) & (np.min(self.coords_tmp[1, :]) > 0) & (np.min(self.coords_tmp[2]) > 0):
+        if (np.max(self.coords_tmp[0, :]) < self.cell.A) &\
+                (np.max(self.coords_tmp[1, :]) < self.cell.B) &\
+                (np.max(self.coords_tmp[2]) < self.cell.C) & \
+                (np.min(self.coords_tmp[0, :]) > 0) & (np.min(self.coords_tmp[1, :]) > 0) &\
+                (np.min(self.coords_tmp[2]) > 0):
             return True
         else:
             return False
@@ -240,17 +243,17 @@ if __name__ == "__main__":
     print(polymer.unroll_chain())
     # print('polymer coords\n', polymer.coords)
 
+    if hasattr(polymer, 'move_kink'):
+        print('kinking...')
+        kink.coordinates = polymer.coords#.copy()
+        polymer.coords =  polymer.move_kink.getOutput(100)
+        print(polymer.coords)
 
-    print('kinking...')
-    kink.coordinates = polymer.coords#.copy()
-    polymer.coords =  polymer.move_kink.getOutput(100)
-    print(polymer.coords)
-
-    print('crankshafting...')
-    crankshaft.coordinates = polymer.coords
-    polymer.coords = polymer.move_crankshaft.getOutput(100)
-
-    print(polymer.coords)
+    if hasattr(polymer, 'move_crankshaft'):
+        print('crankshafting...')
+        crankshaft.coordinates = polymer.coords
+        polymer.coords = polymer.move_crankshaft.getOutput(100)
+        print(polymer.coords)
 
 
 
