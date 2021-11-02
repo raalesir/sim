@@ -45,7 +45,7 @@ def prepare_simulation(a,b,c, n):
     :rtype:
     """
 
-    f_f = ForceField(linear=True)
+    f_f = ForceField(linear=True, amplitude=20)
     f_f.origin = b
     print(f_f)
 
@@ -129,21 +129,40 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
         #     polymer.coords_tmp = polymer.move_pin.getOutput(n_steps =1)
 
         if polymer.check_borders() & polymer.check_overlap():
-            polymer.coords = polymer.coords_tmp.copy()
-            polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
-            if show & (step%100 == 0) :
-                # print('show')
-                scatter.x = polymer.coords[0, :];
-                scatter.y = polymer.coords[1, :];
-                scatter.z = polymer.coords[2, :];
-                lines.x = polymer.coords[0, :];
-                lines.y = polymer.coords[1, :];
-                lines.z = polymer.coords[2, :];
-                t =  np.mean(polymer.coords, axis=1)
-                # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
-                dst  = polymer.cell.f_f.get_distance(t[1])
-                walks.append(t)
-                distances.append(dst)
+            # calculatin energy for the new configuration
+            t = np.mean(polymer.coords_tmp, axis=1)
+            dst_new1 = polymer.cell.f_f.get_distance(t[1])
+            energy_new1 = polymer.cell.f_f.get_value()(dst_new1)
+            dst_new2 = polymer.cell.B - dst_new1
+            energy_new2 = polymer.cell.f_f.get_value()(dst_new2)
+            energy_new = energy_new2 + energy_new1
+
+            # calculatin energy for the old configuration
+            t = np.mean(polymer.coords, axis=1)
+            dst_old1 = polymer.cell.f_f.get_distance(t[1])
+            energy_old1 = polymer.cell.f_f.get_value()(dst_old1)
+            dst_old2 = polymer.cell.B - dst_old1
+            # print(dst_old2, t[1])
+            energy_old2 = polymer.cell.f_f.get_value()(dst_old2)
+            energy_old = energy_old1 + energy_old2
+
+            # print(energy_old, energy_new)
+            if (energy_new-energy_old) < rnd:
+                polymer.coords = polymer.coords_tmp.copy()
+                polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
+                if show & (step%100 == 0) :
+                    # print('show')
+                    scatter.x = polymer.coords[0, :];
+                    scatter.y = polymer.coords[1, :];
+                    scatter.z = polymer.coords[2, :];
+                    lines.x = polymer.coords[0, :];
+                    lines.y = polymer.coords[1, :];
+                    lines.z = polymer.coords[2, :];
+                    t =  np.mean(polymer.coords, axis=1)
+                    # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
+                    dst  = polymer.cell.f_f.get_distance(t[1])
+                    walks.append(t)
+                    distances.append(dst)
         else:
             # print('outside')
             polymer.coords = coords_save
