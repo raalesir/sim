@@ -5,18 +5,22 @@
 
 import numpy as np
 import random
+import sys
 
 try:
     from sim.consts  import rot
-    from  sim.aux import n_conf
+    from  sim.aux import n_conf, get_n_beads, get_sequence_of_coords
+    # from sim import aux
 
 except ModuleNotFoundError:
     try:
         from consts import rot
-        from  aux import n_conf
+        # import  aux
+        from  aux import n_conf, get_n_beads, get_sequence_of_coords
     except ModuleNotFoundError:
         from  .consts import rot
-        from .aux import n_conf
+        from .aux import n_conf, get_n_beads, get_sequence_of_coords
+        # import  .aux
 
 
 
@@ -154,7 +158,8 @@ class Rosenbluth(Move):
         """
 
         self.length = self.coordinates.shape[1]
-        n_beads = abs(i1 -i2)
+        n_beads = get_n_beads(self.length, i1, i2) - 1
+        # n_beads = abs(i1 -i2)
         # print(a,b,i1,i2, 'n_beads=', n_beads)
         # print(self.coordinates)
 
@@ -181,11 +186,11 @@ class Rosenbluth(Move):
                                Rosenbluth.build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
                                )
 
+        # print(regrown_coords.shape, n_beads, abs(i1-i2))
         if dk < 0:
             regrown_coords[:, 0] = -  regrown_coords[:, 0]
         if dl < 0:
             regrown_coords[:, 1] = -  regrown_coords[:, 1]
-
         if dm < 0:
             regrown_coords[:, 2] = -  regrown_coords[:, 2]
 
@@ -195,17 +200,34 @@ class Rosenbluth(Move):
         #     tmp = reverse(tmp)
 
 
+        coordinates_list =  get_sequence_of_coords(self.length, i1, i2)
+        cross_end  = coordinates_list[0]+ len(coordinates_list) -1 != coordinates_list[-1]
+
         if i1 < i2:
-            regrown_coords = regrown_coords.astype(float)[::-1].T
-            self.coordinates[:, i1:i2 + 1] = regrown_coords.copy()
+            if cross_end:
+                # print('cross1')
+                regrown_coords = regrown_coords.astype(float).T
+            else:
+                regrown_coords = regrown_coords.astype(float)[::-1].T
         else:
-            regrown_coords = regrown_coords.astype(float).T
-            self.coordinates[:, i2:i1 + 1] = regrown_coords.copy()
+            if cross_end:
+                # print('cross2')
+                regrown_coords = regrown_coords.astype(float)[::-1].T
+            else:
+                regrown_coords = regrown_coords.astype(float).T
 
-        # print(tmp[:,0], self.coordinates[:, i1], tmp[:,-1], self.coordinates[:, i2], tmp.shape, i1,i2)
 
-        # print('tmp1', tmp - self.coordinates[:, min(i1,i2): max(i1,i2)+1])
-        # print('tmp2', tmp - self.coordinates[:, min(i1,i2): max(i1,i2)+1])
+
+        self.coordinates[:, coordinates_list] = regrown_coords.copy()
+
+        # print(i1, i2, self.length, coordinates_list, len(coordinates_list), regrown_coords.shape, a, b, n_beads)
+
+        if  np.sum(np.abs(np.diff(self.coordinates.T, axis=0))) != len(np.diff(self.coordinates.T, axis=0)):
+            print(np.sum(np.abs(np.diff(self.coordinates.T, axis=0))), len(np.diff(self.coordinates.T, axis=0)))
+            print(repr(self.coordinates.T))
+            print(repr(regrown_coords.T))
+            sys.exit()
+
         self.output = self.coordinates.copy()
         # print(self.output)
 

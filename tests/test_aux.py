@@ -80,3 +80,62 @@ def test_n_conf_pass5():
     checked on paper
     """
     assert aux.n_conf(4, 0 ,0,2) == 28.0
+
+
+
+def test_get_n_beads1():
+
+    assert aux.get_n_beads(0, 0, 0) == 1
+
+
+def test_get_n_beads2():
+    assert aux.get_n_beads(10, 0, 0) == 1
+
+def test_get_n_beads3():
+    assert aux.get_n_beads(10, 0, 5) == 6
+
+def test_get_n_beads5():
+    assert aux.get_n_beads(10, 1, 5) == 5
+
+def test_get_n_beads6():
+    assert aux.get_n_beads(10, 5, 1) == 5
+
+
+def test_get_n_beads4():
+    "9,0,1,2"
+    assert aux.get_n_beads(10, 2, 9) == 4
+
+def test_get_n_beads7():
+    "9,0,1,2"
+    assert aux.get_n_beads(10, 9, 2) == 4
+
+
+def test_get_n_beads8():
+    "9,0,1,2"
+    assert aux.get_n_beads(10, 12, 9) == 0
+
+def test_get_n_beads9():
+    "9,0,1,2"
+    assert aux.get_n_beads(10, -1, 9) == 0
+
+
+
+def test_get_sequence_of_coords():
+
+    assert aux.get_sequence_of_coords(0,0,0) == [0]
+
+
+def test_get_sequence_of_coords1():
+    assert aux.get_sequence_of_coords(10, -1, 1)  == None
+
+
+def test_get_sequence_of_coord2():
+    assert aux.get_sequence_of_coords(10, 0, 4) == [0,1,2,3,4]
+
+
+def test_get_sequence_of_coord3():
+    assert aux.get_sequence_of_coords(10, 0, 5) == [5,6,7,8,9,0]
+
+
+
+
