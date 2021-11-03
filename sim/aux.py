@@ -503,7 +503,7 @@ def get_n_beads(n, i1 ,i2):
 
 
 
-def get_sequence_of_coords(n, i1, i2):
+def get_sequence_of_coords1(n, i1, i2):
     """
     given  number  of elements in the ring (n), starting and ending indexes (i1, i2)
     returns a list of element numbers subjected to move
@@ -514,6 +514,7 @@ def get_sequence_of_coords(n, i1, i2):
     :type i1: int
     :param i2: ending position
     :type i2: int
+
     :return: list of elements of ring chain subjected to move
     :rtype: list
     """
@@ -529,3 +530,46 @@ def get_sequence_of_coords(n, i1, i2):
             else: return list(range(i1, n)) + list(range(i2+1))
 
 
+
+def get_sequence_of_coords(n, i1, i2, small_ark = True):
+    """
+    given  number  of elements in the ring (n), starting and ending indexes (i1, i2)
+    returns a list of element numbers subjected to move
+
+    :param n: number of elements
+    :type n: int
+    :param i1: starting position
+    :type i1: int
+    :param i2: ending position
+    :type i2: int
+    :param small_ark: return small or big ark
+    :type small_ark: bool
+    :return: list of elements of ring chain subjected to move
+    :rtype: list
+    """
+
+    if (n < max(i1, i2)) | (i1 < 0) | (i2 < 0):
+        return None
+    else:
+
+        if i1<i2:
+            r1 = range(i1,i2+1)
+            r2 = range(i2, n)
+            r3 = range(i1+1)
+        else:
+            r1 = range(i2, i1 + 1)
+            r2 = range(i1, n)
+            r3 = range(i2 + 1)
+
+
+        if len(r1) <= len(r2) +  len(r3):
+                small = list(r1); large = list(r2) + list(r3)
+        else:
+                large = list(r1)
+                small = list(r2) + list(r3)
+
+
+        if small_ark:
+            return  small
+        else:
+            return  large

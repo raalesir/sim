@@ -108,7 +108,7 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
                 ind2 = random.randint(0, polymer.coords.shape[1]-1)
 
             # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
-            polymer.coords_tmp = polymer.move_rosenbluth.getOutput(ind1, ind2, cached_counts)
+            polymer.coords_tmp = polymer.move_rosenbluth.getOutput(ind1, ind2, cached_counts, small_ark=False)
         # print('diff\n ', repr(polymer.coords),  repr(polymer.coords_tmp))
 
         rnd = random.random()
@@ -150,7 +150,7 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
             if (energy_new-energy_old) < rnd:
                 polymer.coords = polymer.coords_tmp.copy()
                 # polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
-                if show & (step%100 == 0) :
+                if show & (step%2 == 0) :
                     # print('show')
                     scatter.x = polymer.coords[0, :];
                     scatter.y = polymer.coords[1, :];

@@ -144,3 +144,43 @@ def test_poolymer_check_borders_pass():
 
     assert res == True
 
+
+
+def test_rosenbluth_move1():
+    """
+    the coordinates should not change if select for regrowing  i and i+1 element
+    :return:
+    :rtype:
+    """
+    rosenbluth = moves.Rosenbluth()
+    rosenbluth.use_cache = False
+
+    rosenbluth.coordinates =  np.array([[0, 1, 2, 2, 1, 0],
+                                        [0, 0, 0, 1, 1, 1],
+                                        [0, 0, 0, 0, 0, 0]])
+
+    res = rosenbluth.getOutput(i1=0, i2=1, cached_counts=None)
+
+    assert np.array_equal(res, rosenbluth.coordinates)
+
+
+
+def test_rosenbluth_move2():
+    """
+        he coordinates should not change if select for regrowing  i and i+1 element
+
+    :return:
+    :rtype:
+    """
+
+    rosenbluth = moves.Rosenbluth()
+    rosenbluth.use_cache = False
+
+    rosenbluth.coordinates =  np.array([[0, 1, 2, 2, 1, 0],
+                                        [0, 0, 0, 1, 1, 1],
+                                        [0, 0, 0, 0, 0, 0]])
+
+    res = rosenbluth.getOutput(i1=5, i2=0, cached_counts=None)
+
+    assert np.array_equal(res, rosenbluth.coordinates)
+
