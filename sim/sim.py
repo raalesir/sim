@@ -83,7 +83,7 @@ def prepare_simulation(a,b,c, n):
 
 
 
-def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000,
+def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, n_steps = 1000,
                    use_moves=['move_rosenbluth']):
     """
     running the  simulation
@@ -149,7 +149,7 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
             # print(energy_old, energy_new)
             if (energy_new-energy_old) < rnd:
                 polymer.coords = polymer.coords_tmp.copy()
-                polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
+                # polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
                 if show & (step%100 == 0) :
                     # print('show')
                     scatter.x = polymer.coords[0, :];
@@ -158,6 +158,10 @@ def run_simulation(polymer, scatter=None, lines=None, show=False, n_steps = 1000
                     lines.x = polymer.coords[0, :];
                     lines.y = polymer.coords[1, :];
                     lines.z = polymer.coords[2, :];
+                    ori_ter.x = polymer.coords[0, [0, polymer.n //2]]
+                    ori_ter.y = polymer.coords[1, [0, polymer.n //2]]
+                    ori_ter.z = polymer.coords[2, [0, polymer.n //2]]
+
                     t =  np.mean(polymer.coords, axis=1)
                     # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
                     dst  = polymer.cell.f_f.get_distance(t[1])
