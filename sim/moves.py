@@ -5,18 +5,22 @@
 
 import numpy as np
 import random
+import sys
 
 try:
     from sim.consts  import rot
-    from  sim.aux import n_conf
+    from  sim.aux import n_conf, get_n_beads, get_sequence_of_coords
+    # from sim import aux
 
 except ModuleNotFoundError:
     try:
         from consts import rot
-        from  aux import n_conf
+        # import  aux
+        from  aux import n_conf, get_n_beads, get_sequence_of_coords
     except ModuleNotFoundError:
         from  .consts import rot
-        from .aux import n_conf
+        from .aux import n_conf, get_n_beads, get_sequence_of_coords
+        # import  .aux
 
 
 
@@ -61,149 +65,169 @@ class Rosenbluth(Move):
     """
     class  for regrowing chain between two points
     """
+    use_cache = True
 
     def __init__(self):
         super(Move, self).__init__()
+
 
     def __str__(self):
         return "rosenbluth"
 
 
-    def getOutput(self, a, b, i1, i2, cached_counts):
+    @staticmethod
+    def get_neighbours(n, dx, dy, dz):
         """
-        regrows the chain betweeen the a and b
+        returns all possible  next steps
+        """
+        r = []
+        r.append([n - 1, dx + 1, dy, dz])
+        r.append([n - 1, dx - 1, dy, dz])
 
-        :param a: triplet (k1, l1, m1) as starting point
-        :type a: tuple of integers
-        :param b: triplet(k2,l2,m2) as finishing point
-        :type b: tuple of integers
+        r.append([n - 1, dx, dy + 1, dz])
+        r.append([n - 1, dx, dy - 1, dz])
+
+        r.append([n - 1, dx, dy, dz + 1])
+        r.append([n - 1, dx, dy, dz - 1])
+
+        return r
+
+
+    @staticmethod
+    def make_limits(a_, b_):
+
+        k1, l1, m1 = a_
+        k2, l2, m2 = b_
+
+        return k2 - k1, l2 - l1, m2 - m1
+
+    @staticmethod
+    def build_chain(N, dx, dy, dz, coords, counts):
+        """
+        build chain between 2 ends
+        """
+
+        if N < 2:
+            #         print('base case')
+            #         print("0,0,0,0")
+            return [[0, 0, 0]]
+            #         return
+
+        else:
+            rr = []
+            neighbours = Rosenbluth.get_neighbours(N, dx, dy, dz)
+            for neighbour in neighbours:
+                if Rosenbluth.use_cache:
+                    try:
+                        t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
+                    except:
+                        t = n_conf(*neighbour)
+                        print('miss. out of box? ', neighbour)
+                    rr.append(t)
+                else:
+                    rr.append(n_conf(*neighbour))
+            try:
+                l = [item / sum(rr) for item in rr]
+            except:
+                l = [0 * len(rr)]
+            r = np.cumsum(l)
+            try:
+                selected = neighbours[np.where(r > np.random.random())[0][0]]
+                c = [selected[1:]] + Rosenbluth.build_chain(*selected, selected[1:], counts)
+            except:
+                # no way to build chain
+                print('no way to  build chain')
+                selected = [1, 0, 0, 0]
+                c = [selected[1:]] + Rosenbluth.build_chain(*selected, selected[1:], counts)
+
+            return c
+
+
+    def getOutput(self, i1, i2, cached_counts):
+        """
+        regrows the chain betweeen the i1 and i2
+
+        :param i1: start index  to regrow
+        :type i1: int
+        :param i2: last index to regrow
+        :type i2: int
+        :param cached_counts: Array with  cached number  of trajectories for given `N, k,l,m`
+        :type cached_counts:  4D numpy array
         :return: regrown coordinates
         :rtype: (3, N) Numpy array of integers
         """
+
         self.length = self.coordinates.shape[1]
-        n_beads = abs(i1 -i2)
+        n_beads = get_n_beads(self.length, i1, i2) - 1
+        # n_beads = abs(i1 -i2)
         # print(a,b,i1,i2, 'n_beads=', n_beads)
         # print(self.coordinates)
 
-
-        def get_neighbours(N, dx, dy, dz):
-            """
-            returns all possible  next steps
-            """
-
-            r = []
-            r.append([N - 1, dx + 1, dy, dz])
-            # if dx > 0:
-            r.append([N - 1, dx - 1, dy, dz])
-
-            r.append([N - 1, dx, dy + 1, dz])
-            # if dy > 0:
-            r.append([N - 1, dx, dy - 1, dz])
-
-            r.append([N - 1, dx, dy, dz + 1])
-            # if dz > 0:
-            r.append([N - 1, dx, dy, dz - 1])
-
-            return r
-
-        def build_chain(N, dx, dy, dz, coords, counts):
-            """
-            build chain between 2 ends
-            """
-
-            if N < 2:
-                #         print('base case')
-                #         print("0,0,0,0")
-                return [[0, 0, 0]]
-                #         return
-
-            else:
-                rr = []
-                neighbours = get_neighbours(N, dx, dy, dz)
-                for neighbour in neighbours:
-                    if use_cache:
-                        try:
-                            t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
-                        except:
-                            t = n_conf(*neighbour)
-                            print('miss. out of box? ', neighbour)
-                        rr.append(t)
-                    else:
-                        rr.append(n_conf(*neighbour))
-                try:
-                    l = [item / sum(rr) for item in rr]
-                except:
-                    l = [0 * len(rr)]
-                r = np.cumsum(l)
-                try:
-                    selected = neighbours[np.where(r > np.random.random())[0][0]]
-                    c = [selected[1:]] + build_chain(*selected, selected[1:], counts)
-                except:
-                    # no way to build chain
-                    print('no way to  build chain')
-                    selected = [1, 0, 0, 0]
-                    c = [selected[1:]] + build_chain(*selected, selected[1:], counts)
-
-                return c
+        a = int(self.coordinates[0, i1]), int(self.coordinates[1, i1]), int(self.coordinates[2, i1])
+        b = int(self.coordinates[0, i2]), int(self.coordinates[1, i2]), int(self.coordinates[2, i2])
 
 
-        def reverse(A):
-            """
-            reverses the trajectory with mirroring
-            """
-            diffs = np.diff(A, 1, axis=0)
-            rev = [A[-1]]
+        # def reverse(A):
+        #     """
+        #     reverses the trajectory with mirroring
+        #     """
+        #     diffs = np.diff(A, 1, axis=0)
+        #     rev = [A[-1]]
+        #
+        #     for d in diffs:
+        #         rev.append(rev[-1] - d)
+        #
+        #     return np.array(rev)[::-1]
 
-            for d in diffs:
-                rev.append(rev[-1] - d)
 
-            return np.array(rev)[::-1]
+        dk, dl, dm = Rosenbluth.make_limits(a, b)
 
-
-        def make_limits(a_,b_):
-            k1, l1, m1 = a_
-            k2, l2, m2 = b_
-
-            return k2 - k1, l2 - l1, m2 - m1
-
-        dk, dl, dm = make_limits(a, b)
-
-        # cached_counts = cache_n_conf(n_beads, dk + 10, dl + 10, dm + 10)
-        use_cache = True
-
-        tmp = np.array([[abs(dk), abs(dl), abs(dm)]] + \
-                               build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
+        regrown_coords = np.array([[abs(dk), abs(dl), abs(dm)]] + \
+                               Rosenbluth.build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
                                )
 
+        # print(regrown_coords.shape, n_beads, abs(i1-i2))
         if dk < 0:
-            tmp[:, 0] = -  tmp[:, 0]
+            regrown_coords[:, 0] = -  regrown_coords[:, 0]
         if dl < 0:
-            tmp[:, 1] = -  tmp[:, 1]
-
+            regrown_coords[:, 1] = -  regrown_coords[:, 1]
         if dm < 0:
-            tmp[:, 2] = -  tmp[:, 2]
+            regrown_coords[:, 2] = -  regrown_coords[:, 2]
 
-        tmp = tmp + np.array([a[0], a[1], a[2]])
-        # print("======")
-        # for i in range(tmp.shape[0]):
-        #     print(tmp[i], reverse(tmp)[i])
+        regrown_coords = regrown_coords + np.array([a[0], a[1], a[2]])
 
         # if random.random() < .5:
         #     tmp = reverse(tmp)
 
 
-        if (i1 < i2):
-            tmp = tmp.astype(float)[::-1].T
-            self.coordinates[:, i1:i2 + 1] = tmp.copy()
+        coordinates_list =  get_sequence_of_coords(self.length, i1, i2)
+        cross_end  = coordinates_list[0]+ len(coordinates_list) -1 != coordinates_list[-1]
 
+        if i1 < i2:
+            if cross_end:
+                # print('cross1')
+                regrown_coords = regrown_coords.astype(float).T
+            else:
+                regrown_coords = regrown_coords.astype(float)[::-1].T
         else:
-            tmp = tmp.astype(float).T
-            self.coordinates[:, i2:i1 + 1] = tmp.copy()
+            if cross_end:
+                # print('cross2')
+                regrown_coords = regrown_coords.astype(float)[::-1].T
+            else:
+                regrown_coords = regrown_coords.astype(float).T
 
-        # print(tmp[:,0], self.coordinates[:, i1], tmp[:,-1], self.coordinates[:, i2], tmp.shape, i1,i2)
 
-        # print('tmp1', tmp - self.coordinates[:, min(i1,i2): max(i1,i2)+1])
-        # print('tmp2', tmp - self.coordinates[:, min(i1,i2): max(i1,i2)+1])
+
+        self.coordinates[:, coordinates_list] = regrown_coords.copy()
+
+        # print(i1, i2, self.length, coordinates_list, len(coordinates_list), regrown_coords.shape, a, b, n_beads)
+
+        if  np.sum(np.abs(np.diff(self.coordinates.T, axis=0))) != len(np.diff(self.coordinates.T, axis=0)):
+            print(np.sum(np.abs(np.diff(self.coordinates.T, axis=0))), len(np.diff(self.coordinates.T, axis=0)))
+            print(repr(self.coordinates.T))
+            print(repr(regrown_coords.T))
+            sys.exit()
+
         self.output = self.coordinates.copy()
         # print(self.output)
 

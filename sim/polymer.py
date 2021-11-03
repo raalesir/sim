@@ -53,7 +53,7 @@ class Polymer:
 
 
     def __str__(self):
-        msg = 40*"X" + """\nring polymer with %i beads\nconfined into the cell with dimensions (%i,%i,%i)\nmoves registered are: %s\n"""\
+        msg = 40*"X" + """\nring polymer with %i beads\nconfined into  cell with the dimensions (%i,%i,%i)\nmoves registered are: %s\n"""\
                %(self.n, self.cell.A, self.cell.B, self.cell.C, [move  for  move in dir(self) if 'move_' in move]) +\
               40*"X"
 

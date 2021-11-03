@@ -479,3 +479,53 @@ def cache_n_conf(N, dx, dy, dz):
                     res.append(n_conf(n + 1, i, j, k))
 
     return np.array(res).reshape(N, dx, dy, dz)  # .astype(int)
+
+
+
+def get_n_beads(n, i1 ,i2):
+    """
+    given length of the ring polymer (n) and the starting-ending positions (i1, i2)
+    returns the length of the segment of the smaller length
+
+    :param n: number of elements
+    :type n: int
+    :param i1: starting position
+    :type i1: int
+    :param i2: ending position
+    :type i2: int
+    :return: length of the smaller segment
+    :rtype: int
+    """
+    if (n < max(i1,i2)) | (i1<0) | (i2<0):
+        return  0
+    else:
+        return min(abs(i2-i1)+1, n - abs(i2-i1)+1)
+
+
+
+def get_sequence_of_coords(n, i1, i2):
+    """
+    given  number  of elements in the ring (n), starting and ending indexes (i1, i2)
+    returns a list of element numbers subjected to move
+
+    :param n: number of elements
+    :type n: int
+    :param i1: starting position
+    :type i1: int
+    :param i2: ending position
+    :type i2: int
+    :return: list of elements of ring chain subjected to move
+    :rtype: list
+    """
+
+    if (n < max(i1, i2)) | (i1 < 0) | (i2 < 0):
+        return None
+    else:
+        if abs(i2-i1) < n - abs(i2-i1):
+            if i1<i2: return  list(range(i1, i2+1))
+            else: return  list(range(i2, i1+1))
+        else:
+            if i1<i2: return list(range(i2, n)) + list(range(i1+1))
+            else: return list(range(i1, n)) + list(range(i2+1))
+
+
