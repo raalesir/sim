@@ -531,7 +531,7 @@ def get_sequence_of_coords1(n, i1, i2):
 
 
 
-def get_sequence_of_coords(n, i1, i2, small_ark = True):
+def get_sequence_of_coords(n, i1, i2, ori_ark = True):
     """
     given  number  of elements in the ring (n), starting and ending indexes (i1, i2)
     returns a list of element numbers subjected to move
@@ -542,8 +542,8 @@ def get_sequence_of_coords(n, i1, i2, small_ark = True):
     :type i1: int
     :param i2: ending position
     :type i2: int
-    :param small_ark: return small or big ark
-    :type small_ark: bool
+    :param ori_ark: return ark passing ORI
+    :type ori_ark: bool
     :return: list of elements of ring chain subjected to move
     :rtype: list
     """
@@ -562,14 +562,14 @@ def get_sequence_of_coords(n, i1, i2, small_ark = True):
             r3 = range(i2 + 1)
 
 
-        if len(r1) <= len(r2) +  len(r3):
-                small = list(r1); large = list(r2) + list(r3)
-        else:
-                large = list(r1)
-                small = list(r2) + list(r3)
+        # if len(r1) <= len(r2) +  len(r3):
+        #         small = list(r1); large = list(r2) + list(r3)
+        # else:
+        #         large = list(r1)
+        #         small = list(r2) + list(r3)
 
 
-        if small_ark:
-            return  small
+        if ori_ark:
+            return  list(r2) + list(r3)
         else:
-            return  large
+            return  list(r1)

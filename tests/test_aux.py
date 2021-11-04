@@ -130,17 +130,17 @@ def test_get_sequence_of_coords1():
 
 
 def test_get_sequence_of_coord2():
-    assert aux.get_sequence_of_coords(10, 0, 4) == [0,1,2,3,4]
+    assert aux.get_sequence_of_coords(10, 0, 4, ori_ark=False) == [0,1,2,3,4]
 
 
 def test_get_sequence_of_coord3():
-    assert aux.get_sequence_of_coords(10, 0, 5) == [0, 1, 2, 3, 4, 5]
+    assert aux.get_sequence_of_coords(10, 0, 5, ori_ark=True) == [5, 6, 7, 8, 9, 0]
 
 
 
 def test_get_sequence_of_coord4():
-    assert aux.get_sequence_of_coords(10, 1, 4, small_ark=False) == [4, 5,6,7,8,9,0,1]
+    assert aux.get_sequence_of_coords(10, 1, 4, ori_ark=True) == [4, 5, 6, 7, 8, 9, 0, 1]
 
 
 def test_get_sequence_of_coord5():
-    assert aux.get_sequence_of_coords(10, 4, 0, small_ark=False) == [4, 5,6,7,8,9,0]
+    assert aux.get_sequence_of_coords(10, 4, 0, ori_ark=True) == [4, 5, 6, 7, 8, 9, 0]
