@@ -143,7 +143,7 @@ class Rosenbluth(Move):
             return c
 
 
-    def getOutput(self, i1, i2, cached_counts, small_ark=True):
+    def getOutput(self, i1, i2, cached_counts, ori_ark=True):
         """
         regrows the chain betweeen the i1 and i2
 
@@ -153,15 +153,15 @@ class Rosenbluth(Move):
         :type i2: int
         :param cached_counts: Array with  cached number  of trajectories for given `N, k,l,m`
         :type cached_counts:  4D numpy array
-        :param small_ark: return small or big ark
-        :type  small_ark:bool
+        :param ori_ark: return small or big ark
+        :type  ori_ark:bool
         :return: regrown coordinates
         :rtype: (3, N) Numpy array of integers
         """
 
         self.length = self.coordinates.shape[1]
 
-        coordinates_list =  get_sequence_of_coords(self.length, i1, i2, small_ark=small_ark)
+        coordinates_list =  get_sequence_of_coords(self.length, i1, i2, ori_ark=ori_ark)
 
         n_beads = len(coordinates_list) -1 #get_n_beads(self.length, i1, i2) - 1
 
