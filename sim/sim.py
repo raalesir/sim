@@ -228,29 +228,42 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
         coords_save2 = polymer2.coords.copy()
 
         if hasattr(polymer1, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
-            polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
 
-            ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
-           
-            polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
+
 
             if step >= n_steps//2:
-                # print('dd')
                 polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
                 ind1_, ind2_, ori_ark_ = make_indexes_and_ark(polymer2)
                 polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1_, ind2_, cached_counts, ori_ark=ori_ark_)
 
-            # if (ind1 == ind1_) and (ind2 == ind2_):
-            #     print(np.array_equal(polymer1.coords_tmp, polymer2.coords_tmp))
+                polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
+                ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
+                polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
+
             else:
-                polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
-                polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(0, (polymer2.n)-1, cached_counts, ori_ark=False)
+                if step %2 ==  0:
+
+                    polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
+                    ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
+
+                    polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(0, (polymer2.n)-1, cached_counts, ori_ark=False)
+                else:
+                    polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
+                    ind1, ind2, ori_ark = make_indexes_and_ark(polymer2)
+                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
+
+                    polymer1.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(0, (polymer1.n) - 1, cached_counts,
+                                                                             ori_ark=False)
+
 
 
         # print('diff\n ', repr(polymer1.coords),  repr(polymer1.coords_tmp))
 
 
-        if polymer1.check_borders() &  polymer2.check_borders() & polymer1.check_overlap() :#& polymer2.check_overlap() :
+        if polymer1.check_borders() &  polymer2.check_borders():# & polymer1.check_overlap() & polymer2.check_overlap() :
             # calculatin energy for the new configuration
             t1 = np.mean(polymer1.coords_tmp, axis=1)
             dst_new1 = polymer1.cell.f_f.get_distance(t1[1])
@@ -278,15 +291,15 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 polymer2.coords = polymer2.coords_tmp.copy()
 
                 # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
-                if show & (step % 20 == 0):
+                if show & (step % 10 == 0):
                     # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
 
-                    scatter1.x = polymer1.coords[0, :].copy();
-                    scatter1.y = polymer1.coords[1, :].copy();
-                    scatter1.z = polymer1.coords[2, :].copy();
-                    lines1.x = polymer1.coords[0, :].copy();
-                    lines1.y = polymer1.coords[1, :].copy();
-                    lines1.z = polymer1.coords[2, :].copy();
+                    scatter1.x = polymer1.coords[0, :];
+                    scatter1.y = polymer1.coords[1, :];
+                    scatter1.z = polymer1.coords[2, :];
+                    lines1.x = polymer1.coords[0, :];
+                    lines1.y = polymer1.coords[1, :];
+                    lines1.z = polymer1.coords[2, :];
 
                     scatter2.x = polymer2.coords[0, :];
                     scatter2.y = polymer2.coords[1, :];
