@@ -181,6 +181,33 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
     return walks, distances
 
 
+
+def make_indexes_and_ark(polymer_):
+    """
+
+    :param polymer_:
+    :type polymer_:
+    :return:
+    :rtype:
+    """
+
+    ind1 = random.randint(0, polymer_.coords.shape[1] - 1)
+    ind2 = ind1
+    while ind2 == ind1:
+        # print('stuck')
+        ind2 = random.randint(0, polymer_.coords.shape[1] - 1)
+
+    # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
+    rnd = random.random()
+    if rnd > .5:
+        ori_ark = True
+    else:
+        ori_ark = False
+
+
+    return ind1, ind2, ori_ark
+
+
 def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori_ter=None, show=False, n_steps=1000,
                      use_moves=['move_rosenbluth']):
 
@@ -193,55 +220,55 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     print('caching  counts...')
     cached_counts = cache_n_conf(polymer1.n, polymer1.cell.A, polymer1.cell.B, polymer1.cell.C)
     print('done')
-
-    walks = []
+    print('coords should be equal:', np.array_equal(polymer1.coords, polymer2.coords))
+    walks1 = []; walks2 = []
     distances = []
     for step in range(n_steps):
-        coords_save = polymer1.coords.copy()
+        coords_save1 = polymer1.coords.copy()
+        coords_save2 = polymer2.coords.copy()
+
         if hasattr(polymer1, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
             polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
 
-            ind1 = random.randint(0, polymer1.coords.shape[1] - 1)
-            ind2 = ind1
-            while ind2 == ind1:
-                # print('stuck')
-                ind2 = random.randint(0, polymer1.coords.shape[1] - 1)
-
-            # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
-            rnd = random.random()
-            if rnd > .5:
-                ori_ark = True
-            else:
-                ori_ark = False
+            ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
+           
             polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
-            polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
 
-            polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(0,39, cached_counts, ori_ark=False)
+            if step >= n_steps//2:
+                # print('dd')
+                polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
+                ind1_, ind2_, ori_ark_ = make_indexes_and_ark(polymer2)
+                polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1_, ind2_, cached_counts, ori_ark=ori_ark_)
+
+            # if (ind1 == ind1_) and (ind2 == ind2_):
+            #     print(np.array_equal(polymer1.coords_tmp, polymer2.coords_tmp))
+            else:
+                polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(0, (polymer2.n)-1, cached_counts, ori_ark=False)
+
 
         # print('diff\n ', repr(polymer1.coords),  repr(polymer1.coords_tmp))
 
 
-        if polymer1.check_borders() &  polymer2.check_borders(): # & polymer1.check_overlap() :
+        if polymer1.check_borders() &  polymer2.check_borders() & polymer1.check_overlap() :#& polymer2.check_overlap() :
             # calculatin energy for the new configuration
-            t = np.mean(polymer1.coords_tmp, axis=1)
-            dst_new1 = polymer1.cell.f_f.get_distance(t[1])
+            t1 = np.mean(polymer1.coords_tmp, axis=1)
+            dst_new1 = polymer1.cell.f_f.get_distance(t1[1])
             energy_new1 = polymer1.cell.f_f.get_value()(dst_new1)
 
-            t = np.mean(polymer2.coords_tmp, axis=1)
-            dst_new2 =  polymer2.cell.B  - polymer2.cell.f_f.get_distance(t[1])
+            t2 = np.mean(polymer2.coords_tmp, axis=1)
+            dst_new2 =  polymer2.cell.B  - polymer2.cell.f_f.get_distance(t2[1])
             energy_new2 = polymer2.cell.f_f.get_value()(dst_new2)
 
             energy_new = energy_new2 + energy_new1
 
             # calculatin energy for the old configuration
-            t = np.mean(polymer1.coords, axis=1)
-            dst_old1 = polymer1.cell.f_f.get_distance(t[1])
+            t1 = np.mean(polymer1.coords, axis=1)
+            dst_old1 = polymer1.cell.f_f.get_distance(t1[1])
             energy_old1 = polymer1.cell.f_f.get_value()(dst_old1)
 
-            t = np.mean(polymer2.coords, axis=1)
-            dst_old2 = polymer2.cell.B  - polymer2.cell.f_f.get_distance(t[1])
-
-            # print(dst_old2, t[1])
+            t2 = np.mean(polymer2.coords, axis=1)
+            dst_old2 = polymer2.cell.B  - polymer2.cell.f_f.get_distance(t2[1])
             energy_old2 = polymer2.cell.f_f.get_value()(dst_old2)
             energy_old = energy_old1 + energy_old2
 
@@ -251,14 +278,15 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 polymer2.coords = polymer2.coords_tmp.copy()
 
                 # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
-                if show & (step % 100 == 0):
-                    # print('show')
-                    scatter1.x = polymer1.coords[0, :];
-                    scatter1.y = polymer1.coords[1, :];
-                    scatter1.z = polymer1.coords[2, :];
-                    lines1.x = polymer1.coords[0, :];
-                    lines1.y = polymer1.coords[1, :];
-                    lines1.z = polymer1.coords[2, :];
+                if show & (step % 20 == 0):
+                    # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
+
+                    scatter1.x = polymer1.coords[0, :].copy();
+                    scatter1.y = polymer1.coords[1, :].copy();
+                    scatter1.z = polymer1.coords[2, :].copy();
+                    lines1.x = polymer1.coords[0, :].copy();
+                    lines1.y = polymer1.coords[1, :].copy();
+                    lines1.z = polymer1.coords[2, :].copy();
 
                     scatter2.x = polymer2.coords[0, :];
                     scatter2.y = polymer2.coords[1, :];
@@ -271,18 +299,26 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     ori_ter.y = polymer1.coords[1, [0, polymer1.n // 2]]
                     ori_ter.z = polymer1.coords[2, [0, polymer1.n // 2]]
 
-                    t = np.mean(polymer1.coords, axis=1)
+                    t1 = np.mean(polymer1.coords, axis=1)
+                    t2 = np.mean(polymer2.coords, axis=1)
+
                     # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
-                    dst = polymer1.cell.f_f.get_distance(t[1])
-                    walks.append(t)
-                    distances.append(dst)
+                    # dst1 = polymer1.cell.f_f.get_distance(t1[1])
+                    # dst1 = polymer1.cell.f_f.get_distance(t1[1])
+
+                    walks1.append(t1)
+                    walks2.append(t2)
+
+                    # distances.append(dst)
         else:
             # print('outside')
-            polymer1.coords = coords_save
+            polymer1.coords = coords_save1
+            polymer2.coords = coords_save2
+
 
     print("after  moves")
     print(polymer1.coords)
-    return walks, distances
+    return walks1, walks2 #distances
 
 
 
@@ -312,12 +348,13 @@ def prepare_simulation_2(a,b,c, n):
     pin = Pin()
     print(pin)
 
-    rosenbluth = Rosenbluth()
-    print(rosenbluth)
+    rosenbluth1 = Rosenbluth()
+    print(rosenbluth1)
+    rosenbluth2 = Rosenbluth()
 
 
-    polymer1 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth)
-    polymer2 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth)
+    polymer1 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth1)
+    polymer2 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth2)
 
     # polymer = Polymer(n, cell, rosen)
 
