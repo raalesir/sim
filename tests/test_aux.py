@@ -144,3 +144,22 @@ def test_get_sequence_of_coord4():
 
 def test_get_sequence_of_coord5():
     assert aux.get_sequence_of_coords(10, 4, 0, ori_ark=True) == [4, 5, 6, 7, 8, 9, 0]
+
+
+
+def test_get_ind1ind2_1():
+
+    assert aux.get_ind1ind2(10,1000, 100) == (99,0)
+
+
+def test_get_ind1ind2_2():
+
+    assert aux.get_ind1ind2(0,1000, 100) == (99,0)
+
+
+def test_get_ind1ind2_3():
+    assert aux.get_ind1ind2(500, 1000, 100) == (74, 25)
+
+
+def test_get_ind1ind2_4():
+    assert aux.get_ind1ind2(1000, 1000, 100) == (49, 50)

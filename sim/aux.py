@@ -573,3 +573,19 @@ def get_sequence_of_coords(n, i1, i2, ori_ark = True):
             return  list(r2) + list(r3)
         else:
             return  list(r1)
+
+
+def get_ind1ind2(i, n_steps, n_beads):
+    """
+    returns chain unzip indexes
+    :param i: step
+    :type i: int
+    :param n: totat number of steps
+    :type n: int
+    :return: first and last chain index
+    :rtype: tuple
+    """
+
+    part = round(i / n_steps, 1)
+
+    return int(n_beads -1- n_beads/2*part), int(n_beads/2*part)

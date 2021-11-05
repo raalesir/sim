@@ -16,7 +16,7 @@ import random
 try:
     # from sim.consts import N
     from sim.cell import CubicCell, ForceCubicCell
-    from sim.aux import  cache_n_conf
+    from sim.aux import  cache_n_conf, get_ind1ind2
     from sim.moves import Kink, CrankShaft, Pin, Rosenbluth
     from sim.polymer import Polymer
     from sim.force_field import  ForceField
@@ -25,7 +25,7 @@ except ModuleNotFoundError:
     try:
         from cell import CubicCell, ForceCubicCell
         # from consts import  N
-        from aux import cache_n_conf
+        from aux import cache_n_conf, get_ind1ind2
         from moves import Kink,CrankShaft, Pin, Rosenbluth
         from polymer import Polymer
         from force_field import  ForceField
@@ -33,7 +33,7 @@ except ModuleNotFoundError:
         from .cell import  CubicCell, ForceCubicCell
         from .moves import  Kink, CrankShaft,Pin, Rosenbluth
         from .polymer import Polymer
-        from .aux import  cache_n_conf
+        from .aux import  cache_n_conf, get_ind1ind2
         from .force_field import ForceField
 
 
@@ -231,7 +231,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
 
 
-            if step >= n_steps//2:
+            if step >= int(0.7*n_steps):
                 polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
                 ind1_, ind2_, ori_ark_ = make_indexes_and_ark(polymer2)
                 polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1_, ind2_, cached_counts, ori_ark=ori_ark_)
@@ -241,6 +241,8 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
             else:
+
+                i1, i2 = get_ind1ind2(step, int(0.7*n_steps), polymer1.n)
                 if step %2 ==  0:
 
                     polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
@@ -248,15 +250,15 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
                     polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
-                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(0, (polymer2.n)-1, cached_counts, ori_ark=False)
+                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
                 else:
                     polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
                     ind1, ind2, ori_ark = make_indexes_and_ark(polymer2)
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
                     polymer1.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
-                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(0, (polymer1.n) - 1, cached_counts,
-                                                                             ori_ark=False)
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
+                                                                             ori_ark=True)
 
 
 
@@ -291,7 +293,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 polymer2.coords = polymer2.coords_tmp.copy()
 
                 # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
-                if show & (step % 10 == 0):
+                if show & (step % 100 == 0):
                     # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
 
                     scatter1.x = polymer1.coords[0, :];
@@ -342,7 +344,7 @@ def prepare_simulation_2(a,b,c, n):
     :rtype:
     """
 
-    f_f = ForceField(linear=True, amplitude=17)
+    f_f = ForceField(linear=True, amplitude=20)
     f_f.origin = b
     print(f_f)
 
