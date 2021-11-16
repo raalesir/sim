@@ -208,6 +208,36 @@ def make_indexes_and_ark(polymer_):
     return ind1, ind2, ori_ark
 
 
+def  attraction_energy(p1, p2, new=True):
+    """
+    calculates attraction energy for a polymer
+    :param p1:
+    :type p1:
+    :return:
+    :rtype:
+    """
+    if new:
+
+        t = np.mean(p1.coords_tmp, axis=1)
+        dst = p1.cell.f_f.get_distance(t[1])
+        energy1 = p1.cell.f_f.get_value()(dst)
+
+        t2 = np.mean(p2.coords_tmp, axis=1)
+        dst_new2 =  p2.cell.B  - p2.cell.f_f.get_distance(t2[1])
+        energy2 = p2.cell.f_f.get_value()(dst_new2)
+    else:
+
+        t1 = np.mean(p1.coords, axis=1)
+        dst_old1 = p1.cell.f_f.get_distance(t1[1])
+        energy1 = p1.cell.f_f.get_value()(dst_old1)
+
+        t2 = np.mean(p2.coords, axis=1)
+        dst_old2 = p2.cell.B - p2.cell.f_f.get_distance(t2[1])
+        energy2 = p2.cell.f_f.get_value()(dst_old2)
+
+    return energy1+energy2
+
+
 def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori_ter=None, show=False, n_steps=1000,
                      use_moves=['move_rosenbluth']):
 
@@ -266,26 +296,19 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
 
         if polymer1.check_borders() &  polymer2.check_borders():# & polymer1.check_overlap() & polymer2.check_overlap() :
+
             # calculatin energy for the new configuration
-            t1 = np.mean(polymer1.coords_tmp, axis=1)
-            dst_new1 = polymer1.cell.f_f.get_distance(t1[1])
-            energy_new1 = polymer1.cell.f_f.get_value()(dst_new1)
-
-            t2 = np.mean(polymer2.coords_tmp, axis=1)
-            dst_new2 =  polymer2.cell.B  - polymer2.cell.f_f.get_distance(t2[1])
-            energy_new2 = polymer2.cell.f_f.get_value()(dst_new2)
-
-            energy_new = energy_new2 + energy_new1
+            energy_new = attraction_energy(polymer1, polymer2) +\
+                         2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size+ \
+                         .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
+                         .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
 
             # calculatin energy for the old configuration
-            t1 = np.mean(polymer1.coords, axis=1)
-            dst_old1 = polymer1.cell.f_f.get_distance(t1[1])
-            energy_old1 = polymer1.cell.f_f.get_value()(dst_old1)
+            energy_old = attraction_energy(polymer1, polymer2, new=False) +\
+                         2.*np.intersect1d(polymer1.coords, polymer2.coords).size+ \
+                         0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
+                         0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
 
-            t2 = np.mean(polymer2.coords, axis=1)
-            dst_old2 = polymer2.cell.B  - polymer2.cell.f_f.get_distance(t2[1])
-            energy_old2 = polymer2.cell.f_f.get_value()(dst_old2)
-            energy_old = energy_old1 + energy_old2
 
             # print(energy_old, energy_new)
             if (np.exp(-energy_new + energy_old)) >= random.random():
