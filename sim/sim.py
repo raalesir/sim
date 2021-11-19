@@ -11,13 +11,13 @@ import numpy as np
 # import matplotlib.pyplot as plt
 
 import random
-
+import  sys
 
 try:
     # from sim.consts import N
     from sim.cell import CubicCell, ForceCubicCell
     from sim.aux import  cache_n_conf, get_ind1ind2
-    from sim.moves import Kink, CrankShaft, Pin, Rosenbluth
+    from sim.moves import Kink, CrankShaft, Pin, Rosenbluth, Rosenbluth1
     from sim.polymer import Polymer
     from sim.force_field import  ForceField
 
@@ -26,12 +26,12 @@ except ModuleNotFoundError:
         from cell import CubicCell, ForceCubicCell
         # from consts import  N
         from aux import cache_n_conf, get_ind1ind2
-        from moves import Kink,CrankShaft, Pin, Rosenbluth
+        from moves import Kink,CrankShaft, Pin, Rosenbluth, Rosenbluth1
         from polymer import Polymer
         from force_field import  ForceField
     except:
         from .cell import  CubicCell, ForceCubicCell
-        from .moves import  Kink, CrankShaft,Pin, Rosenbluth
+        from .moves import  Kink, CrankShaft,Pin, Rosenbluth, Rosenbluth1
         from .polymer import Polymer
         from .aux import  cache_n_conf, get_ind1ind2
         from .force_field import ForceField
@@ -253,7 +253,19 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     print('coords should be equal:', np.array_equal(polymer1.coords, polymer2.coords))
     walks1 = []; walks2 = []
     distances = []
+
+
+    polymer1.move_rosenbluth.A = polymer1.cell.A
+    polymer1.move_rosenbluth.B = polymer1.cell.B
+    polymer1.move_rosenbluth.C = polymer1.cell.C
+
+    polymer2.move_rosenbluth.A = polymer2.cell.A
+    polymer2.move_rosenbluth.B = polymer2.cell.B
+    polymer2.move_rosenbluth.C = polymer2.cell.C
+
     for step in range(n_steps):
+        if step%10000 == 0:
+            print(step)
         coords_save1 = polymer1.coords.copy()
         coords_save2 = polymer2.coords.copy()
 
@@ -278,7 +290,8 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
                     ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
-
+                    # print(ind1,  ind2)
+                    # sys.exit()
                     polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
                 else:
@@ -299,15 +312,15 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
             # calculatin energy for the new configuration
             energy_new = attraction_energy(polymer1, polymer2) +\
-                         2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size+ \
-                         .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
-                         .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
+                         2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
+                         # .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
+                         # .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
 
             # calculatin energy for the old configuration
             energy_old = attraction_energy(polymer1, polymer2, new=False) +\
-                         2.*np.intersect1d(polymer1.coords, polymer2.coords).size+ \
-                         0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
-                         0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
+                         2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
+                         # 0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
+                         # 0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
 
 
             # print(energy_old, energy_new)
@@ -386,9 +399,9 @@ def prepare_simulation_2(a,b,c, n):
     pin = Pin()
     print(pin)
 
-    rosenbluth1 = Rosenbluth()
+    rosenbluth1 = Rosenbluth1()
     print(rosenbluth1)
-    rosenbluth2 = Rosenbluth()
+    rosenbluth2 = Rosenbluth1()
 
 
     polymer1 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth1)

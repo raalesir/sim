@@ -3,9 +3,10 @@
     ===========
 """
 
-import numpy as np
 import random
 import sys
+
+import numpy as np
 
 try:
     from sim.consts  import rot
@@ -69,6 +70,9 @@ class Rosenbluth(Move):
 
     def __init__(self):
         super(Move, self).__init__()
+        self.A = None
+        self.B = None
+        self.C = None
 
 
     def __str__(self):
@@ -99,10 +103,10 @@ class Rosenbluth(Move):
         k1, l1, m1 = a_
         k2, l2, m2 = b_
 
-        return k2 - k1, l2 - l1, m2 - m1
+        return int(k2 - k1), int(l2 - l1), int(m2 - m1)
 
-    @staticmethod
-    def build_chain(N, dx, dy, dz, coords, counts):
+    # @staticmethod
+    def build_chain(self,  N, dx, dy, dz, grown, counts, real_coord):
         """
         build chain between 2 ends
         """
@@ -114,31 +118,44 @@ class Rosenbluth(Move):
             #         return
 
         else:
-            rr = []
+
+            number_of_confs_all_neighbours = []
             neighbours = Rosenbluth.get_neighbours(N, dx, dy, dz)
             for neighbour in neighbours:
                 if Rosenbluth.use_cache:
                     try:
-                        t = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
+                        number_of_confs = counts[neighbour[0] - 1, abs(neighbour[1]), abs(neighbour[2]), abs(neighbour[3])]
                     except:
-                        t = n_conf(*neighbour)
+                        number_of_confs = n_conf(*neighbour)
                         print('miss. out of box? ', neighbour)
-                    rr.append(t)
+                    number_of_confs_all_neighbours.append(number_of_confs)
                 else:
-                    rr.append(n_conf(*neighbour))
+                    number_of_confs_all_neighbours.append(n_conf(*neighbour))
             try:
-                l = [item / sum(rr) for item in rr]
+                l = [item / sum(number_of_confs_all_neighbours) for item in number_of_confs_all_neighbours]
             except:
-                l = [0 * len(rr)]
-            r = np.cumsum(l)
+                l = [0 * len(number_of_confs_all_neighbours)]
             try:
-                selected = neighbours[np.where(r > np.random.random())[0][0]]
-                c = [selected[1:]] + Rosenbluth.build_chain(*selected, selected[1:], counts)
+                r = np.cumsum(l)
+                ind = np.where(r > np.random.random())[0][0]
+                selected = neighbours[
+                    ind
+                ]
+                # print([el[1:]  in self.coordinates.T for el in neighbours])
+                # print('coords', repr(self.coordinates))
+                # selected[1:]
+                real_coord = Rosenbluth.get_neighbours(N, real_coord[0], real_coord[1], real_coord[2])[ind][1:]
+
+                # print(neighbours, real_coord)
+                # print(real_coord)
+                # print(trial_real_coord)
+                # sys.exit()
+                c = [selected[1:]] + self.build_chain(*selected, grown, counts, real_coord)
             except:
                 # no way to build chain
                 print('no way to  build chain')
                 selected = [1, 0, 0, 0]
-                c = [selected[1:]] + Rosenbluth.build_chain(*selected, selected[1:], counts)
+                c = [selected[1:]] + self.build_chain(*selected, selected[1:], counts)
 
             return c
 
@@ -185,40 +202,14 @@ class Rosenbluth(Move):
         dk, dl, dm = Rosenbluth.make_limits(a, b)
 
         regrown_coords = np.array([[abs(dk), abs(dl), abs(dm)]] + \
-                               Rosenbluth.build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts)
+                               self.build_chain(n_beads, abs(dk), abs(dl), abs(dm), [], cached_counts, self.coordinates[:, i2])
                                )
 
         # print(regrown_coords.shape, n_beads, abs(i1-i2))
-        if dk < 0:
-            regrown_coords[:, 0] = -  regrown_coords[:, 0]
-        if dl < 0:
-            regrown_coords[:, 1] = -  regrown_coords[:, 1]
-        if dm < 0:
-            regrown_coords[:, 2] = -  regrown_coords[:, 2]
+        regrown_coords = Rosenbluth.translate_coords_back(dk, dl, dm, i1, i2, a, coordinates_list, regrown_coords)
 
-        regrown_coords = regrown_coords + np.array([a[0], a[1], a[2]])
-
-        # if random.random() < .5:
-        #     tmp = reverse(tmp)
-
-
-        cross_end  = coordinates_list[0]+ len(coordinates_list) -1 != coordinates_list[-1]
-
-        if i1 < i2:
-            if cross_end:
-                # print('cross1')
-                regrown_coords = regrown_coords.astype(float).T
-            else:
-                regrown_coords = regrown_coords.astype(float)[::-1].T
-        else:
-            if cross_end:
-                # print('cross2')
-                regrown_coords = regrown_coords.astype(float)[::-1].T
-            else:
-                regrown_coords = regrown_coords.astype(float).T
-
-
-
+        # print(a, b)
+        # sys.exit()
         self.coordinates[:, coordinates_list] = regrown_coords.copy()
 
         # print(i1, i2, self.length, coordinates_list, len(coordinates_list), regrown_coords.shape, a, b, n_beads)
@@ -233,6 +224,162 @@ class Rosenbluth(Move):
         # print(self.output)
 
         return self.output
+
+
+    @staticmethod
+    def translate_coords_back(dk, dl, dm, i1, i2, a, coordinates_list, regrown_coords):
+        """
+        translates the coordinates of the regrown part to be  a part of the rest chain
+
+        :param regrown_coords: regrown coords for the part of the chain
+        :type regrown_coords: (N,  3) integer, numpy array
+        :return: regrown_coords: (3,  N)
+        :rtype: integer, numpy array
+        """
+        if dk < 0:
+            regrown_coords[:, 0] = -  regrown_coords[:, 0]
+        if dl < 0:
+            regrown_coords[:, 1] = -  regrown_coords[:, 1]
+        if dm < 0:
+            regrown_coords[:, 2] = -  regrown_coords[:, 2]
+
+        regrown_coords = regrown_coords + np.array([a[0], a[1], a[2]])
+
+        # if random.random() < .5:
+        #     tmp = reverse(tmp)
+
+
+        cross_end = coordinates_list[0] + len(coordinates_list) - 1 != coordinates_list[-1]
+
+        if i1 < i2:
+            if cross_end:
+                # print('cross1')
+                regrown_coords = regrown_coords.astype(float).T
+            else:
+                regrown_coords = regrown_coords.astype(float)[::-1].T
+        else:
+            if cross_end:
+                # print('cross2')
+                regrown_coords = regrown_coords.astype(float)[::-1].T
+            else:
+                regrown_coords = regrown_coords.astype(float).T
+
+        return regrown_coords
+
+
+
+class Rosenbluth1(Rosenbluth):
+    """
+    different regrow method
+    """
+
+    def get_candidates(self, n, coords):
+        """
+        returns closest neigbours for the given coordinates
+
+        :param n: number of monomers
+        :type n: int
+        :param coords: grid position of the monomer
+        :type coords: (3,1) Numpy array
+        :return: list of lists with 6 neighbours
+        :rtype: list
+        """
+
+
+
+    def getOutput(self, i1, i2, cached_counts, ori_ark=True):
+        """
+         regrows the chain between the i1 and i2
+
+        :param i1: start index  to regrow
+        :type i1: int
+        :param i2: last index to regrow
+        :type i2: int
+        :param cached_counts: Array with  cached number  of trajectories for given `N, k,l,m`
+        :type cached_counts:  4D numpy array
+        :param ori_ark: return small or big ark
+        :type  ori_ark:bool
+        :return: regrown coordinates
+        :rtype: (3, N) Numpy array of integers
+        """
+
+        self.length = self.coordinates.shape[1]
+
+        coordinates_list = get_sequence_of_coords(self.length, i1, i2, ori_ark=ori_ark)
+
+        n_beads = len(coordinates_list)
+        # for i, index in enumerate(coordinates_list[:-2])
+
+        coords_shape = self.coordinates.shape
+
+        coords_list = self.coordinates.T.tolist() # trying to optimize
+
+        for i in range(len(coordinates_list) - 2):
+            # neighbours = Rosenbluth1.get_neighbours(n_beads,
+            #                                         self.coordinates[0, coordinates_list[i]],
+            #                                         self.coordinates[1, coordinates_list[i]],
+            #                                         self.coordinates[2, coordinates_list[i]])
+            neighbours = Rosenbluth1.get_neighbours(n_beads,
+                                                    coords_list[coordinates_list[i]][0],
+                                                    coords_list[coordinates_list[i]][1],
+                                                    coords_list[coordinates_list[i]][2])
+            n_confs = []
+            for neighbour in neighbours:
+                # dk, dl, dm = Rosenbluth1.make_limits(self.coordinates[:, coordinates_list[-1]], neighbour[1:])
+                dk, dl, dm = Rosenbluth1.make_limits(coords_list[coordinates_list[-1]], neighbour[1:])
+
+                try:
+                    number_of_confs = cached_counts[n_beads - i - 3, abs(dk), abs(dl), abs(dm)]
+
+                except:
+                    number_of_confs = n_conf(n_beads - i - 2, dk, dl, dm)
+                    print('miss. out of box? ', neighbour, n_beads - i - 3, dk, dl, dm)
+
+                n_confs.append(number_of_confs)
+            # print(i,n_beads,   n_confs)
+            # n_confs  = n_confs/sum(n_confs)
+            # n_confs = [item / sum(n_confs) for item in n_confs]
+
+
+            # find overlaps
+            # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
+            overlaps = [coords[1:] in coords_list for coords in neighbours]
+            overlap_penalties = [.1 if el else 1.0 for el in overlaps]
+            # print(overlaps,overlap_penalties)
+
+            out_of_box = [any([c[1:][0] >= self.A , c[1:][1] >= self.B, c[1:][2] >= self.C,
+                              c[1:][0] <0, c[1:][1] <0, c[1:][2] <0]) for c in neighbours]
+            out_of_box_penalties = [.0 if el else 1.0 for el in out_of_box]
+
+            total_penalties = [el1 * el2 * el3 for el1, el2, el3 in zip(n_confs, overlap_penalties, out_of_box_penalties)]
+
+            total_penalties = [item / sum(total_penalties) for item in total_penalties]
+            r = np.cumsum(total_penalties)
+            # print(r)
+
+            # print(out_of_box)
+            # sys.exit()
+
+            # print(r)
+            ind = np.where(r > np.random.random())[0][0]
+            selected = neighbours[ind]
+
+            # self.coordinates[:, coordinates_list[i+1]] = selected[1:].copy()
+            coords_list[coordinates_list[i+1]] = selected[1:].copy()
+
+        self.coordinates = np.array(coords_list).T
+
+        if np.sum(np.abs(np.diff(self.coordinates.T, axis=0))) != len(np.diff(self.coordinates.T, axis=0)):
+            print(np.sum(np.abs(np.diff(self.coordinates.T, axis=0))), len(np.diff(self.coordinates.T, axis=0)))
+            print(repr(self.coordinates.T))
+            # print(repr(regrown_coords.T))
+            print(coordinates_list)
+            sys.exit()
+
+        self.output = self.coordinates.copy()
+
+        return self.output
+
 
 
 
