@@ -79,21 +79,25 @@ class Rosenbluth(Move):
         return "rosenbluth"
 
 
-    @staticmethod
-    def get_neighbours(n, dx, dy, dz):
+    # @staticmethod
+    def get_neighbours(self, n, dx, dy, dz):
         """
         returns all possible  next steps
         """
         r = []
-        r.append([n - 1, dx + 1, dy, dz])
-        r.append([n - 1, dx - 1, dy, dz])
-
-        r.append([n - 1, dx, dy + 1, dz])
-        r.append([n - 1, dx, dy - 1, dz])
-
-        r.append([n - 1, dx, dy, dz + 1])
-        r.append([n - 1, dx, dy, dz - 1])
-
+        if dx < self.A -1:
+            r.append([n - 1, dx + 1, dy, dz])
+        if dx > 0:
+          r.append([n - 1, dx - 1, dy, dz])
+        if dy < self.B -1:
+            r.append([n - 1, dx, dy + 1, dz])
+        if dy > 0:
+            r.append([n - 1, dx, dy - 1, dz])
+        if dz < self.C -1:
+            r.append([n - 1, dx, dy, dz + 1])
+        if dz > 0:
+            r.append([n - 1, dx, dy, dz - 1])
+        if len(r) == 0: print("STOP! Not  able  to build")
         return r
 
 
@@ -120,7 +124,7 @@ class Rosenbluth(Move):
         else:
 
             number_of_confs_all_neighbours = []
-            neighbours = Rosenbluth.get_neighbours(N, dx, dy, dz)
+            neighbours = self.get_neighbours(N, dx, dy, dz)
             for neighbour in neighbours:
                 if Rosenbluth.use_cache:
                     try:
@@ -144,7 +148,7 @@ class Rosenbluth(Move):
                 # print([el[1:]  in self.coordinates.T for el in neighbours])
                 # print('coords', repr(self.coordinates))
                 # selected[1:]
-                real_coord = Rosenbluth.get_neighbours(N, real_coord[0], real_coord[1], real_coord[2])[ind][1:]
+                real_coord = self.get_neighbours(N, real_coord[0], real_coord[1], real_coord[2])[ind][1:]
 
                 # print(neighbours, real_coord)
                 # print(real_coord)
@@ -319,7 +323,7 @@ class Rosenbluth1(Rosenbluth):
             #                                         self.coordinates[0, coordinates_list[i]],
             #                                         self.coordinates[1, coordinates_list[i]],
             #                                         self.coordinates[2, coordinates_list[i]])
-            neighbours = Rosenbluth1.get_neighbours(n_beads,
+            neighbours = self.get_neighbours(n_beads,
                                                     coords_list[coordinates_list[i]][0],
                                                     coords_list[coordinates_list[i]][1],
                                                     coords_list[coordinates_list[i]][2])
@@ -344,7 +348,7 @@ class Rosenbluth1(Rosenbluth):
             # find overlaps
             # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
             overlaps = [coords[1:] in coords_list for coords in neighbours]
-            overlap_penalties = [.1 if el else 1.0 for el in overlaps]
+            overlap_penalties = [.05 if el else 1.0 for el in overlaps]
             # print(overlaps,overlap_penalties)
 
             out_of_box = [any([c[1:][0] >= self.A , c[1:][1] >= self.B, c[1:][2] >= self.C,
