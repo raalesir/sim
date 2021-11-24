@@ -71,8 +71,8 @@ class Polymer:
         if (np.max(self.coords_tmp[0, :]) < self.cell.A) &\
                 (np.max(self.coords_tmp[1, :]) < self.cell.B) &\
                 (np.max(self.coords_tmp[2]) < self.cell.C) & \
-                (np.min(self.coords_tmp[0, :]) > 0) & (np.min(self.coords_tmp[1, :]) > 0) &\
-                (np.min(self.coords_tmp[2]) > 0):
+                (np.min(self.coords_tmp[0, :]) >= 0) & (np.min(self.coords_tmp[1, :]) >= 0) &\
+                (np.min(self.coords_tmp[2]) >= 0):
             return True
         else:
             return False
