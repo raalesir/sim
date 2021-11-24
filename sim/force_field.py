@@ -35,7 +35,7 @@ class ForceField:
         :rtype: function
         """
         def f(x):
-            return  -self.amplitude/x
+            return  -self.amplitude/(x+0.01)
 
         return   f
 
