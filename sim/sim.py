@@ -262,7 +262,8 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     polymer2.move_rosenbluth.A = polymer2.cell.A
     polymer2.move_rosenbluth.B = polymer2.cell.B
     polymer2.move_rosenbluth.C = polymer2.cell.C
-
+    accepted = 0
+    outside = 0
     for step in range(n_steps):
         if step%10000 == 0:
             print(step)
@@ -311,14 +312,14 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
         if polymer1.check_borders() &  polymer2.check_borders():# & polymer1.check_overlap() & polymer2.check_overlap() :
 
             # calculatin energy for the new configuration
-            energy_new = attraction_energy(polymer1, polymer2) +\
-                         2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
+            energy_new = attraction_energy(polymer1, polymer2) \
+                         # 2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
                          # .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
                          # .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
 
             # calculatin energy for the old configuration
-            energy_old = attraction_energy(polymer1, polymer2, new=False) +\
-                         2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
+            energy_old = attraction_energy(polymer1, polymer2, new=False) \
+                         # 2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
                          # 0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
                          # 0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
 
@@ -327,9 +328,10 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
             if (np.exp(-energy_new + energy_old)) >= random.random():
                 polymer1.coords = polymer1.coords_tmp.copy()
                 polymer2.coords = polymer2.coords_tmp.copy()
-
+                accepted +=1
+                if step % 1000 == 0: print('acceptance is: ', 100* accepted/(step+1), -energy_new + energy_old )
                 # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
-                if show & (step % 100 == 0):
+            if show & (step % 1000 == 0):
                     # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
 
                     scatter1.x = polymer1.coords[0, :];
@@ -363,6 +365,9 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     # distances.append(dst)
         else:
             # print('outside')
+            outside+=1
+            if step % 100 == 0: print('outside is: ', 100 * outside / (step + 1))
+
             polymer1.coords = coords_save1
             polymer2.coords = coords_save2
 
@@ -380,7 +385,7 @@ def prepare_simulation_2(a,b,c, n):
     :rtype:
     """
 
-    f_f = ForceField(linear=True, amplitude=20)
+    f_f = ForceField(linear=True, amplitude=2)
     f_f.origin = b
     print(f_f)
 
