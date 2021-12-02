@@ -9,17 +9,17 @@ import sys
 import numpy as np
 
 try:
-    from sim.consts  import rot
+    from sim.consts  import rot,OVERLAP_PENALTY, OUT_OF_BOX_PENALTY
     from  sim.aux import n_conf, get_n_beads, get_sequence_of_coords
     # from sim import aux
 
 except ModuleNotFoundError:
     try:
-        from consts import rot
+        from consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY
         # import  aux
         from  aux import n_conf, get_n_beads, get_sequence_of_coords
     except ModuleNotFoundError:
-        from  .consts import rot
+        from  .consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY
         from .aux import n_conf, get_n_beads, get_sequence_of_coords
         # import  .aux
 
@@ -358,12 +358,12 @@ class Rosenbluth1(Rosenbluth):
             # find overlaps
             # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
             overlaps = [coords[1:] in coords_list + coords_list_another for coords in neighbours]
-            overlap_penalties = [.01 if el else 1.0 for el in overlaps]
+            overlap_penalties = [OVERLAP_PENALTY if el else 1.0 for el in overlaps]
             # print(overlaps,overlap_penalties)
 
             out_of_box = [any([c[1:][0] >= self.A , c[1:][1] >= self.B, c[1:][2] >= self.C,
                               c[1:][0] <0, c[1:][1] <0, c[1:][2] <0]) for c in neighbours]
-            out_of_box_penalties = [.0 if el else 1.0 for el in out_of_box]
+            out_of_box_penalties = [OUT_OF_BOX_PENALTY if el else 1.0 for el in out_of_box]
 
             total_penalties = [el1 * el2 * el3 for el1, el2, el3 in zip(n_confs, overlap_penalties, out_of_box_penalties)]
 

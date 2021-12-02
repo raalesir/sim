@@ -20,6 +20,7 @@ class ForceField:
         self.f_r = self.get_value()
         self.amplitude = amplitude
 
+
     def __str__(self):
         if self.linear:
             return 'linear'
@@ -29,7 +30,7 @@ class ForceField:
 
     def get_value(self):
         """
-        potential dependency on  distance
+        potential dependency on  distance, electrostatic-like
 
         :return: function for  potential
         :rtype: function

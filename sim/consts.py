@@ -9,6 +9,11 @@ A = 8 # depth
 B = 20  # length of the bounding box
 C = 8
 
+TER_ENERGY_AMPLITUDE = 0.0
+
+OVERLAP_PENALTY = 0.1
+OUT_OF_BOX_PENALTY = 0.0
+
 
 def _make_rotation_matrices():
     """

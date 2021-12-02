@@ -14,7 +14,7 @@ import random
 import  sys
 
 try:
-    # from sim.consts import N
+    from sim.consts import TER_ENERGY_AMPLITUDE
     from sim.cell import CubicCell, ForceCubicCell
     from sim.aux import  cache_n_conf, get_ind1ind2
     from sim.moves import Kink, CrankShaft, Pin, Rosenbluth, Rosenbluth1
@@ -24,7 +24,7 @@ try:
 except ModuleNotFoundError:
     try:
         from cell import CubicCell, ForceCubicCell
-        # from consts import  N
+        from consts import  TER_ENERGY_AMPLITUDE
         from aux import cache_n_conf, get_ind1ind2
         from moves import Kink,CrankShaft, Pin, Rosenbluth, Rosenbluth1
         from polymer import Polymer
@@ -35,6 +35,7 @@ except ModuleNotFoundError:
         from .polymer import Polymer
         from .aux import  cache_n_conf, get_ind1ind2
         from .force_field import ForceField
+        from .consts import TER_ENERGY_AMPLITUDE
 
 
 
@@ -212,8 +213,12 @@ def ter_energy(p1, p2, new=True):
     """
     Terminus attraction to the specific position in  the cell
 
-    :param p:  polymer
-    :type p: polymer class
+    :param p1: polymer1
+    :type p1: polymer
+    :param p2: polymer1
+    :type p2: polymer
+    :param new: switch for either new or old config
+    :type p1: bool
     :return: energy due to terminus  displacement
     :rtype: float
     """
@@ -231,42 +236,52 @@ def ter_energy(p1, p2, new=True):
 
     # print(t2)
     tmp1  = t2_1-t1
-    tmp1  = .1* np.dot(tmp1,  tmp1)
+    tmp1  = TER_ENERGY_AMPLITUDE * np.dot(tmp1,  tmp1)
     tmp2 = t2_2 - t1
-    tmp2 = .1 * np.dot(tmp2, tmp2)
+    tmp2 = TER_ENERGY_AMPLITUDE * np.dot(tmp2, tmp2)
 
-    return 0#tmp1+tmp2
+    return tmp1+tmp2
 
 
 
 def  attraction_energy(p1, p2, new=True):
     """
-    calculates attraction energy for a polymer
-    :param p1:
-    :type p1:
+    calculates attraction energy for a polymer.
+    It pulls Polymer2 to the top and Polymer1 to the bottom.
+
+    :param p1: polymer1
+    :type p1: polymer
+    :param p2: polymer1
+    :type p2: polymer
+    :param new: switch for either new or old config
+    :type p1: bool
     :return:
     :rtype:
     """
-    if new:
 
-        t = np.mean(p1.coords_tmp, axis=1)
-        dst = p1.cell.f_f.get_distance(t[1])
-        energy1 = p1.cell.f_f.get_value()(dst)
+    if p1.cell.f_f.on:
 
-        t2 = np.mean(p2.coords_tmp, axis=1)
-        dst_new2 =  p2.cell.B  - p2.cell.f_f.get_distance(t2[1])
-        energy2 = p2.cell.f_f.get_value()(dst_new2)
+        if new:
+            t = np.mean(p1.coords_tmp, axis=1)
+            dst = p1.cell.f_f.get_distance(t[1])
+            energy1 = p1.cell.f_f.get_value()(dst)
+
+            t2 = np.mean(p2.coords_tmp, axis=1)
+            dst_new2 =  p2.cell.B  - p2.cell.f_f.get_distance(t2[1])
+            energy2 = p2.cell.f_f.get_value()(dst_new2)
+        else:
+
+            t1 = np.mean(p1.coords, axis=1)
+            dst_old1 = p1.cell.f_f.get_distance(t1[1])
+            energy1 = p1.cell.f_f.get_value()(dst_old1)
+
+            t2 = np.mean(p2.coords, axis=1)
+            dst_old2 = p2.cell.B - p2.cell.f_f.get_distance(t2[1])
+            energy2 = p2.cell.f_f.get_value()(dst_old2)
+
+        return energy1+energy2
     else:
-
-        t1 = np.mean(p1.coords, axis=1)
-        dst_old1 = p1.cell.f_f.get_distance(t1[1])
-        energy1 = p1.cell.f_f.get_value()(dst_old1)
-
-        t2 = np.mean(p2.coords, axis=1)
-        dst_old2 = p2.cell.B - p2.cell.f_f.get_distance(t2[1])
-        energy2 = p2.cell.f_f.get_value()(dst_old2)
-
-    return energy1+energy2
+        return  0
 
 
 def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori_ter=None, show=False, n_steps=1000,
@@ -423,7 +438,7 @@ def prepare_simulation_2(a,b,c, n):
     :rtype:
     """
 
-    f_f = ForceField(linear=True, amplitude=0)
+    f_f = ForceField(linear=True, amplitude=10, on=False)
     f_f.origin = b
     print(f_f)
 
