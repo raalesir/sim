@@ -208,6 +208,37 @@ def make_indexes_and_ark(polymer_):
     return ind1, ind2, ori_ark
 
 
+def ter_energy(p1, p2, new=True):
+    """
+    Terminus attraction to the specific position in  the cell
+
+    :param p:  polymer
+    :type p: polymer class
+    :return: energy due to terminus  displacement
+    :rtype: float
+    """
+
+    # print('p.cell.A', p.cell.A)
+    t1 = np.array([p1.cell.A, p1.cell.B/2,  p1.cell.C/2])#.reshape(3,1)
+    # print(t1)
+    if new:
+        t2_1  = p1.coords_tmp[:, p1.n // 2]
+        t2_2  = p2.coords_tmp[:, p1.n // 2]
+
+    else:
+        t2_1 = p1.coords[:, p1.n // 2]
+        t2_2 = p1.coords[:, p1.n // 2]
+
+    # print(t2)
+    tmp1  = t2_1-t1
+    tmp1  = .1* np.dot(tmp1,  tmp1)
+    tmp2 = t2_2 - t1
+    tmp2 = .1 * np.dot(tmp2, tmp2)
+
+    return 0#tmp1+tmp2
+
+
+
 def  attraction_energy(p1, p2, new=True):
     """
     calculates attraction energy for a polymer
@@ -264,6 +295,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     polymer2.move_rosenbluth.C = polymer2.cell.C
     accepted = 0
     outside = 0
+
     for step in range(n_steps):
         if step%10000 == 0:
             print(step)
@@ -280,6 +312,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1_, ind2_, cached_counts, ori_ark=ori_ark_)
 
                 polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
+                polymer1.move_rosenbluth.coordinates_another = polymer2.coords_tmp.copy()
                 ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
                 polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
@@ -312,14 +345,16 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
         if polymer1.check_borders() &  polymer2.check_borders():# & polymer1.check_overlap() & polymer2.check_overlap() :
 
             # calculatin energy for the new configuration
-            energy_new = attraction_energy(polymer1, polymer2) \
+            energy_new = attraction_energy(polymer1, polymer2) +\
+                        ter_energy(polymer1, polymer2)
                          # 2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
                          # .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
                          # .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
 
             # calculatin energy for the old configuration
-            energy_old = attraction_energy(polymer1, polymer2, new=False) \
-                         # 2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
+            energy_old = attraction_energy(polymer1, polymer2, new=False) + \
+                         ter_energy(polymer1, polymer2, new = False)
+            # 2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
                          # 0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
                          # 0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
 
@@ -331,6 +366,17 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 accepted +=1
                 if step % 1000 == 0: print('acceptance is: ', 100* accepted/(step+1), -energy_new + energy_old )
                 # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
+
+                t1 = np.mean(polymer1.coords, axis=1)
+                t2 = np.mean(polymer2.coords, axis=1)
+
+                # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
+                # dst1 = polymer1.cell.f_f.get_distance(t1[1])
+                # dst1 = polymer1.cell.f_f.get_distance(t1[1])
+
+                walks1.append(t1)
+                walks2.append(t2)
+
             if show & (step % 1000 == 0):
                     # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
 
@@ -352,15 +398,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     ori_ter.y = polymer1.coords[1, [0, polymer1.n // 2]]
                     ori_ter.z = polymer1.coords[2, [0, polymer1.n // 2]]
 
-                    t1 = np.mean(polymer1.coords, axis=1)
-                    t2 = np.mean(polymer2.coords, axis=1)
 
-                    # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
-                    # dst1 = polymer1.cell.f_f.get_distance(t1[1])
-                    # dst1 = polymer1.cell.f_f.get_distance(t1[1])
-
-                    walks1.append(t1)
-                    walks2.append(t2)
 
                     # distances.append(dst)
         else:
@@ -385,7 +423,7 @@ def prepare_simulation_2(a,b,c, n):
     :rtype:
     """
 
-    f_f = ForceField(linear=True, amplitude=2)
+    f_f = ForceField(linear=True, amplitude=0)
     f_f.origin = b
     print(f_f)
 
