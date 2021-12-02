@@ -29,30 +29,39 @@ class Polymer:
     represents a ring polymer on a cubic grid
     """
 
-    def __init__(self, n,  cell_, *args):
+    def __init__(self, n,  cell_, *args, **kwargs):
         """
         polymer init
         """
         self.n = n
         self.cell = cell_
 
-        # print(args)
-        print([move.__str__() for move in args])
+        # print('args are:' , args)
+
+        # print([move.__str__() for move in args])
 
         self.coords_tmp = None
         self.coords = self.set_init_coords()
 
-        for move in args:
-            name = 'move_'+move.__str__()
-            setattr(self, name, move)
+        # for move in args:
+        #     name = 'move_'+move.__str__()
+        #     setattr(self, name, move)
 
+        if 'moves' in kwargs:
+            for move in kwargs['moves']:
+                name = 'move_' + move.__str__()
+                setattr(self, name, move)
+
+
+        for md in kwargs.pop('mds'):
+            if md == 'ori':
+                self.ori_md = self.get_ori_md()
 
         # self.kink.coordinates = self.coords
         # self.kink.length = self.n
 
         self.distance_matrix = None
 
-        self.ori_md = self.get_ori_md()
 
 
     def __str__(self):
@@ -84,6 +93,7 @@ class Polymer:
         :return:
         :rtype:
         """
+        pass
 
 
     def check_borders(self):

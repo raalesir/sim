@@ -461,9 +461,12 @@ def prepare_simulation_2(a,b,c, n):
     print(rosenbluth1)
     rosenbluth2 = Rosenbluth1()
 
+    macro_domains  = ['ori', 'ter','left', 'right','ns_left', 'ns_right']
+    moves = [kink, crankshaft, pin, rosenbluth1]
+    polymer1 = Polymer(n, cell, moves=moves, mds = macro_domains)
 
-    polymer1 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth1)
-    polymer2 = Polymer(n, cell, kink, crankshaft, pin, rosenbluth2)
+    moves = [kink, crankshaft, pin, rosenbluth2]
+    polymer2 = Polymer(n, cell, moves=moves, mds = macro_domains)
 
     # polymer = Polymer(n, cell, rosen)
 
