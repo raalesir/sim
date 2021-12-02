@@ -350,14 +350,11 @@ class Rosenbluth1(Rosenbluth):
                     print('miss. out of box? ', neighbour, n_beads - i - 3, dk, dl, dm)
 
                 n_confs.append(number_of_confs)
-            # print(i,n_beads,   n_confs)
-            # n_confs  = n_confs/sum(n_confs)
-            # n_confs = [item / sum(n_confs) for item in n_confs]
-
 
             # find overlaps
             # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
             overlaps = [coords[1:] in coords_list + coords_list_another for coords in neighbours]
+
             overlap_penalties = [OVERLAP_PENALTY if el else 1.0 for el in overlaps]
             # print(overlaps,overlap_penalties)
 

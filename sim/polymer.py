@@ -46,10 +46,13 @@ class Polymer:
             name = 'move_'+move.__str__()
             setattr(self, name, move)
 
+
         # self.kink.coordinates = self.coords
         # self.kink.length = self.n
 
         self.distance_matrix = None
+
+        self.ori_md = self.get_ori_md()
 
 
     def __str__(self):
@@ -58,6 +61,29 @@ class Polymer:
               40*"X"
 
         return msg
+
+
+
+    def get_ori_md(self):
+        """
+        returns borders for ORI Macro Domain based on the chain length
+
+        :return: [A, B] first and last bead of the ORI macrodomain
+        :rtype: list
+        """
+
+        md_size = self.n // 6 # approximate size
+
+        return [self.n - md_size//2, md_size//2]
+
+
+    def get_cm_md(self):
+        """
+        returns center of mass for the Macro Domain
+
+        :return:
+        :rtype:
+        """
 
 
     def check_borders(self):
