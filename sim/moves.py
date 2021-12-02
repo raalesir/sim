@@ -277,6 +277,11 @@ class Rosenbluth1(Rosenbluth):
     different regrow method
     """
 
+    def __init__(self):
+        super(Rosenbluth, self).__init__()
+        self.coordinates_another = None
+
+
     def get_candidates(self, n, coords):
         """
         returns closest neigbours for the given coordinates
@@ -307,6 +312,7 @@ class Rosenbluth1(Rosenbluth):
         :rtype: (3, N) Numpy array of integers
         """
 
+
         self.length = self.coordinates.shape[1]
 
         coordinates_list = get_sequence_of_coords(self.length, i1, i2, ori_ark=ori_ark)
@@ -317,6 +323,10 @@ class Rosenbluth1(Rosenbluth):
         coords_shape = self.coordinates.shape
 
         coords_list = self.coordinates.T.tolist() # trying to optimize
+        if  self.coordinates_another is None:
+            coords_list_another = []
+        else:
+            coords_list_another =  self.coordinates_another.T.tolist()
 
         for i in range(len(coordinates_list) - 2):
             # neighbours = Rosenbluth1.get_neighbours(n_beads,
@@ -347,8 +357,8 @@ class Rosenbluth1(Rosenbluth):
 
             # find overlaps
             # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
-            overlaps = [coords[1:] in coords_list for coords in neighbours]
-            overlap_penalties = [.05 if el else 1.0 for el in overlaps]
+            overlaps = [coords[1:] in coords_list + coords_list_another for coords in neighbours]
+            overlap_penalties = [.01 if el else 1.0 for el in overlaps]
             # print(overlaps,overlap_penalties)
 
             out_of_box = [any([c[1:][0] >= self.A , c[1:][1] >= self.B, c[1:][2] >= self.C,
