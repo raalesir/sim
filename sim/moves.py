@@ -9,18 +9,18 @@ import sys
 import numpy as np
 
 try:
-    from sim.consts  import rot,OVERLAP_PENALTY, OUT_OF_BOX_PENALTY
-    from  sim.aux import n_conf, get_n_beads, get_sequence_of_coords
+    from sim.consts  import rot,OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT
+    from  sim.aux import n_conf, get_n_beads, get_sequence_of_coords,eu_dst
     # from sim import aux
 
 except ModuleNotFoundError:
     try:
-        from consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY
+        from consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT
         # import  aux
-        from  aux import n_conf, get_n_beads, get_sequence_of_coords
+        from  aux import n_conf, get_n_beads, get_sequence_of_coords, eu_dst
     except ModuleNotFoundError:
-        from  .consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY
-        from .aux import n_conf, get_n_beads, get_sequence_of_coords
+        from  .consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT
+        from .aux import n_conf, get_n_beads, get_sequence_of_coords, eu_dst
         # import  .aux
 
 
@@ -280,6 +280,7 @@ class Rosenbluth1(Rosenbluth):
     def __init__(self):
         super(Rosenbluth, self).__init__()
         self.coordinates_another = None
+        self.ori_md = None
 
 
     def get_candidates(self, n, coords):
@@ -328,6 +329,12 @@ class Rosenbluth1(Rosenbluth):
         else:
             coords_list_another =  self.coordinates_another.T.tolist()
 
+        md_count = 0; just_count = 0
+
+        # print(coordinates_list[1], coordinates_list[0])
+        last_monomer = [v[1] - v[0] for v in zip(coords_list[coordinates_list[1]] , coords_list[coordinates_list[0]])]
+        # print('last monomer', last_monomer)
+
         for i in range(len(coordinates_list) - 2):
             # neighbours = Rosenbluth1.get_neighbours(n_beads,
             #                                         self.coordinates[0, coordinates_list[i]],
@@ -351,20 +358,45 @@ class Rosenbluth1(Rosenbluth):
 
                 n_confs.append(number_of_confs)
 
+            n_confs = [v/sum(n_confs) for v in n_confs]
             # find overlaps
             # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
             overlaps = [coords[1:] in coords_list + coords_list_another for coords in neighbours]
 
             overlap_penalties = [OVERLAP_PENALTY if el else 1.0 for el in overlaps]
+            # overlap_penalties = [v/sum(overlap_penalties) for v in overlap_penalties]
             # print(overlaps,overlap_penalties)
 
             out_of_box = [any([c[1:][0] >= self.A , c[1:][1] >= self.B, c[1:][2] >= self.C,
                               c[1:][0] <0, c[1:][1] <0, c[1:][2] <0]) for c in neighbours]
             out_of_box_penalties = [OUT_OF_BOX_PENALTY if el else 1.0 for el in out_of_box]
+            # out_of_box_penalties = [v/sum(out_of_box_penalties) for v in out_of_box_penalties]
 
-            total_penalties = [el1 * el2 * el3 for el1, el2, el3 in zip(n_confs, overlap_penalties, out_of_box_penalties)]
+
+            md_penalties = [1]*len(neighbours)
+            if self.ori_md is not None :
+                if coordinates_list[i] in self.ori_md['indexes']:
+                    md_penalties = [MD_CLUSTERING_AMPLITUDE/eu_dst(self.ori_md['cm'], neighbour[1:]) for neighbour in neighbours]
+                    # print(md_penalties)
+
+            trial_monomers = [[v[1] - v[0] for v in zip(neighbour[1:], coords_list[coordinates_list[i]])]
+                              for neighbour in neighbours]
+            # print(trial_monomers)
+
+            bend = [np.dot(last_monomer, monomer) for monomer in trial_monomers ]
+            # print(bend, bend.index(max(bend)))
+            bend_penalty = [1]*len(neighbours)
+            bend_penalty[bend.index(max(bend))] = BEND_CONSTANT
+            # sys.exit()
+
+            total_penalties = [el2 *el4 * el3 *el1*el5 for el1, el2, el3, el4, el5 in
+                               zip(n_confs, overlap_penalties, out_of_box_penalties, md_penalties, bend_penalty)]
 
             total_penalties = [item / sum(total_penalties) for item in total_penalties]
+            # if coordinates_list[i] in self.ori_md['indexes']:
+            #     just_count +=1
+            #     if total_penalties.index(max(total_penalties)) == md_penalties.index(max(md_penalties)):
+            #         md_count += 1
             r = np.cumsum(total_penalties)
             # print(r)
 
@@ -375,8 +407,20 @@ class Rosenbluth1(Rosenbluth):
             ind = np.where(r > np.random.random())[0][0]
             selected = neighbours[ind]
 
+            # if random.random() < .0001:
+            #     print('n_confs ', n_confs)
+            #     print('out_of_box_penalties', out_of_box_penalties)
+            #     print('overlap_penalties', overlap_penalties)
+            #     print('md_penalties', md_penalties)
+            #     print(total_penalties)
+            #     # print(ind, md_penalties.index(max(md_penalties)))
+            #     print(10 * 'XXXXXXXX')
+                # if ind == md_penalties.index(max(md_penalties)):
+                #     print('catch')
             # self.coordinates[:, coordinates_list[i+1]] = selected[1:].copy()
             coords_list[coordinates_list[i+1]] = selected[1:].copy()
+            last_monomer = [v[1]-v[0] for v in
+                            zip(coords_list[coordinates_list[i+1]] , coords_list[coordinates_list[i]])]
 
         self.coordinates = np.array(coords_list).T
 
@@ -388,7 +432,8 @@ class Rosenbluth1(Rosenbluth):
             sys.exit()
 
         self.output = self.coordinates.copy()
-
+        # if just_count >0:
+        #     print(md_count, just_count)
         return self.output
 
 

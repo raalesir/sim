@@ -589,3 +589,22 @@ def get_ind1ind2(i, n_steps, n_beads):
     part = round(i / n_steps, 1)
 
     return int(n_beads -1- n_beads/2*part), int(n_beads/2*part)
+
+
+def eu_dst(t1, t2):
+    """
+    Euclidian squared distance between 2 elements
+    :param t1:
+    :type t1:
+    :param t2:
+    :type t2:
+    :return:
+    :rtype:
+    """
+
+    tmp = t1 - t2
+    res = np.dot(tmp, tmp)
+    if res == 0:
+        res = 0.1
+
+    return res

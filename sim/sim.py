@@ -284,7 +284,8 @@ def  attraction_energy(p1, p2, new=True):
         return  0
 
 
-def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori_ter=None, show=False, n_steps=1000,
+def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori1=None, ori2=None,
+                     show=False, n_steps=1000,
                      use_moves=['move_rosenbluth']):
 
 
@@ -297,7 +298,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     cached_counts = cache_n_conf(polymer1.n, polymer1.cell.A, polymer1.cell.B, polymer1.cell.C)
     print('done')
     print('coords should be equal:', np.array_equal(polymer1.coords, polymer2.coords))
-    walks1 = []; walks2 = []
+    walks1 = []; walks2 = []; mu=[]
     distances = []
 
 
@@ -311,6 +312,9 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     accepted = 0
     outside = 0
 
+
+
+
     for step in range(n_steps):
         if step%10000 == 0:
             print(step)
@@ -323,11 +327,15 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
             if step >= int(0.7*n_steps):
                 polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
+                polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
+                                                   'cm': polymer2.get_cm_md()}  # transferring MD info to move
                 ind1_, ind2_, ori_ark_ = make_indexes_and_ark(polymer2)
                 polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1_, ind2_, cached_counts, ori_ark=ori_ark_)
 
                 polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
                 polymer1.move_rosenbluth.coordinates_another = polymer2.coords_tmp.copy()
+                polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
+                                                   'cm': polymer1.get_cm_md()}  # transferring MD info to move
                 ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
                 polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
@@ -337,22 +345,45 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 if step %2 ==  0:
 
                     polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
+                    polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
+                                                       'cm': polymer1.get_cm_md()}  # transferring MD info to move
+
                     ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
+
+
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
                     # print(ind1,  ind2)
                     # sys.exit()
                     polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                    polymer2.move_rosenbluth.ori_md = None
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
+
+                    polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
+                                                       'cm': polymer2.get_cm_md(tmp=True)}  # transferring MD info to move
+                    polymer2.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
+                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
+
+
                 else:
                     polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
+                    polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
+                                                       'cm': polymer2.get_cm_md()}  # transferring MD info to move
+
                     ind1, ind2, ori_ark = make_indexes_and_ark(polymer2)
+
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
+
                     polymer1.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
+                    polymer1.move_rosenbluth.ori_md = None
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
                                                                              ori_ark=True)
 
-
+                    polymer1.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                    polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
+                                                   'cm': polymer1.get_cm_md(tmp=True)}  # transferring MD info to move
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
+                                                                         ori_ark=True)
 
         # print('diff\n ', repr(polymer1.coords),  repr(polymer1.coords_tmp))
 
@@ -392,6 +423,14 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                 walks1.append(t1)
                 walks2.append(t2)
 
+                diffs = 0
+                for idx in range(polymer1.cell.B):
+                    p1_counts = np.count_nonzero(polymer1.coords[1,:] == idx)
+                    p2_counts = np.count_nonzero(polymer2.coords[1,:] == idx)
+                    diffs += abs(p2_counts - p1_counts)
+
+                mu.append(diffs)
+
             if show & (step % 1000 == 0):
                     # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
 
@@ -409,9 +448,13 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     lines2.y = polymer2.coords[1, :];
                     lines2.z = polymer2.coords[2, :];
 
-                    ori_ter.x = polymer1.coords[0, [0, polymer1.n // 2]]
-                    ori_ter.y = polymer1.coords[1, [0, polymer1.n // 2]]
-                    ori_ter.z = polymer1.coords[2, [0, polymer1.n // 2]]
+                    ori1.x = polymer1.coords[0, 0:1]
+                    ori1.y = polymer1.coords[1, 0:1]
+                    ori1.z = polymer1.coords[2, 0:1]
+
+                    ori2.x = polymer2.coords[0, 0:1]
+                    ori2.y = polymer2.coords[1, 0:1]
+                    ori2.z = polymer2.coords[2, 0:1]
 
 
 
@@ -427,7 +470,7 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
     print("after  moves")
     print(polymer1.coords)
-    return walks1, walks2 #distances
+    return walks1, walks2, mu #distances
 
 
 

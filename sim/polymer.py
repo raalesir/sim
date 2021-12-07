@@ -11,15 +11,18 @@ try:
     from sim.cell import CubicCell
     from sim.moves import  Kink, CrankShaft, Pin
     from sim.consts import  rot
+    from sim.aux import get_sequence_of_coords
 except ModuleNotFoundError:
     try:
         from cell import CubicCell
         from moves import Kink, CrankShaft, Pin
         from consts import rot
+        from aux import get_sequence_of_coords
     except:
         from .cell import CubicCell
         from .moves import Kink, CrankShaft, Pin
         from .consts import rot
+        from  .aux import get_sequence_of_coords
 # except:
 #     from  sim.cell import  CubicCell
 
@@ -75,25 +78,34 @@ class Polymer:
 
     def get_ori_md(self):
         """
-        returns borders for ORI Macro Domain based on the chain length
+        returns list of indexes for ORI Macro Domain based on the chain length
 
         :return: [A, B] first and last bead of the ORI macrodomain
         :rtype: list
         """
 
-        md_size = self.n // 6 # approximate size
+        md_size = int(self.n // 4) # approximate size
+        i1 = self.n - md_size//2
+        i2 = md_size//2
+        coordinates_list = get_sequence_of_coords(self.n, i1, i2, ori_ark=True)
 
-        return [self.n - md_size//2, md_size//2]
+        return coordinates_list
 
 
-    def get_cm_md(self):
+    def get_cm_md(self, tmp=False):
         """
         returns center of mass for the Macro Domain
 
         :return:
         :rtype:
         """
-        pass
+        if tmp:
+            md = self.coords_tmp[:, self.ori_md]
+        else:
+            md = self.coords[:, self.ori_md]
+
+        return np.mean(md, axis=1)
+
 
 
     def check_borders(self):
