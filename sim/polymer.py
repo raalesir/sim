@@ -27,6 +27,7 @@ except ModuleNotFoundError:
 #     from  sim.cell import  CubicCell
 
 
+
 class Polymer:
     """
     represents a ring polymer on a cubic grid
@@ -38,6 +39,7 @@ class Polymer:
         """
         self.n = n
         self.cell = cell_
+        self.md_size = int(self.n // 4)
 
         # print('args are:' , args)
 
@@ -46,15 +48,9 @@ class Polymer:
         self.coords_tmp = None
         self.coords = self.set_init_coords()
 
-        # for move in args:
-        #     name = 'move_'+move.__str__()
-        #     setattr(self, name, move)
-
-        if 'moves' in kwargs:
-            for move in kwargs['moves']:
-                name = 'move_' + move.__str__()
-                setattr(self, name, move)
-
+        for move in kwargs.pop('moves'):
+            name = 'move_' + move.__str__()
+            setattr(self, name, move)
 
         for md in kwargs.pop('mds'):
             if md == 'ori':
@@ -84,7 +80,7 @@ class Polymer:
         :rtype: list
         """
 
-        md_size = int(self.n // 4) # approximate size
+        md_size = self.md_size # approximate size
         i1 = self.n - md_size//2
         i2 = md_size//2
         coordinates_list = get_sequence_of_coords(self.n, i1, i2, ori_ark=True)
