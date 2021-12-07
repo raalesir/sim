@@ -63,3 +63,31 @@ class ForceCubicCell(CubicCell):
                %(self.A, self.B, self.C, self.f_f, self.f_f.origin)
 
 
+
+
+class ReplicationFactoryCell(ForceCubicCell):
+    """
+    Parallelepiped with set up replication factory
+    """
+
+    def __init__(self, a, b, c, f_f):
+        super().__init__(a,b,c, f_f)
+
+        self.repl_factory  = self.get_replication_factory()
+
+
+
+    def get_replication_factory(self):
+        """
+        returs position of replication factory
+
+        :return: position of repl factory
+        :rtype: list
+        """
+
+        return [(self.A//2, self.B//2, self.C//2 -1), (self.A//2, self.B//2, self.C//2 )]
+
+
+    def __str__(self):
+        return """the cell is a parallelogram with the size (X,Y,Z) = (%i, %i, %i) and replication factory at: %s"""\
+               %(self.A, self.B, self.C, self.repl_factory)

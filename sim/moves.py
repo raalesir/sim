@@ -9,17 +9,17 @@ import sys
 import numpy as np
 
 try:
-    from sim.consts  import rot,OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT
+    from sim.consts  import rot,OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT,PULL_CONSTANT
     from  sim.aux import n_conf, get_n_beads, get_sequence_of_coords,eu_dst
     # from sim import aux
 
 except ModuleNotFoundError:
     try:
-        from consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT
+        from consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT,PULL_CONSTANT
         # import  aux
         from  aux import n_conf, get_n_beads, get_sequence_of_coords, eu_dst
     except ModuleNotFoundError:
-        from  .consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT
+        from  .consts import rot, OVERLAP_PENALTY, OUT_OF_BOX_PENALTY, MD_CLUSTERING_AMPLITUDE,BEND_CONSTANT,PULL_CONSTANT
         from .aux import n_conf, get_n_beads, get_sequence_of_coords, eu_dst
         # import  .aux
 
@@ -436,6 +436,182 @@ class Rosenbluth1(Rosenbluth):
         #     print(md_count, just_count)
         return self.output
 
+
+
+class RosenbluthReplicationFactory(Rosenbluth):
+    """
+    use idea of replication factory, i.e. the replication points always located in the same place
+     close to the middle of the cell
+    """
+
+    def __init__(self):
+        super(Rosenbluth, self).__init__()
+        self.coordinates_another = None
+        self.ori_md = None
+        self.top = False
+
+
+    def get_candidates(self, n, coords):
+        """
+        returns closest neigbours for the given coordinates
+
+        :param n: number of monomers
+        :type n: int
+        :param coords: grid position of the monomer
+        :type coords: (3,1) Numpy array
+        :return: list of lists with 6 neighbours
+        :rtype: list
+        """
+
+
+
+    def getOutput(self, i1, i2, cached_counts, ori_ark=True):
+        """
+         regrows the chain between the i1 and i2
+
+        :param i1: start index  to regrow
+        :type i1: int
+        :param i2: last index to regrow
+        :type i2: int
+        :param cached_counts: Array with  cached number  of trajectories for given `N, k,l,m`
+        :type cached_counts:  4D numpy array
+        :param ori_ark: return small or big ark
+        :type  ori_ark:bool
+        :return: regrown coordinates
+        :rtype: (3, N) Numpy array of integers
+        """
+
+
+        self.length = self.coordinates.shape[1]
+
+        coordinates_list = get_sequence_of_coords(self.length, i1, i2, ori_ark=ori_ark)
+
+        n_beads = len(coordinates_list)
+        # for i, index in enumerate(coordinates_list[:-2])
+
+        coords_shape = self.coordinates.shape
+
+        coords_list = self.coordinates.T.tolist() # trying to optimize
+        if  self.coordinates_another is None:
+            coords_list_another = []
+        else:
+            coords_list_another =  self.coordinates_another.T.tolist()
+
+        md_count = 0; just_count = 0
+
+        # print(coordinates_list[1], coordinates_list[0])
+        last_monomer = [v[1] - v[0] for v in zip(coords_list[coordinates_list[1]] , coords_list[coordinates_list[0]])]
+        # print('last monomer', last_monomer)
+
+        for i in range(len(coordinates_list) - 2):
+            # neighbours = Rosenbluth1.get_neighbours(n_beads,
+            #                                         self.coordinates[0, coordinates_list[i]],
+            #                                         self.coordinates[1, coordinates_list[i]],
+            #                                         self.coordinates[2, coordinates_list[i]])
+            neighbours = self.get_neighbours(n_beads,
+                                                    coords_list[coordinates_list[i]][0],
+                                                    coords_list[coordinates_list[i]][1],
+                                                    coords_list[coordinates_list[i]][2])
+            n_confs = []
+            for neighbour in neighbours:
+                # dk, dl, dm = Rosenbluth1.make_limits(self.coordinates[:, coordinates_list[-1]], neighbour[1:])
+                dk, dl, dm = Rosenbluth1.make_limits(coords_list[coordinates_list[-1]], neighbour[1:])
+
+                try:
+                    number_of_confs = cached_counts[n_beads - i - 3, abs(dk), abs(dl), abs(dm)]
+
+                except:
+                    number_of_confs = n_conf(n_beads - i - 2, dk, dl, dm)
+                    print('miss. out of box? ', neighbour, n_beads - i - 3, dk, dl, dm)
+
+                n_confs.append(number_of_confs)
+
+            n_confs = [v/sum(n_confs) for v in n_confs]
+            # print("n_confs", n_confs)
+            # find overlaps
+            # overlaps = [any(np.equal(self.coordinates.T, coords[1:]).all(1)) for coords in neighbours]
+            overlaps = [coords[1:] in coords_list + coords_list_another for coords in neighbours]
+
+            overlap_penalties = [OVERLAP_PENALTY if el else 1.0 for el in overlaps]
+            # overlap_penalties = [v/sum(overlap_penalties) for v in overlap_penalties]
+            # print("overlap_penalties",overlap_penalties)
+
+            out_of_box = [any([c[1:][0] >= self.A , c[1:][1] >= self.B, c[1:][2] >= self.C,
+                              c[1:][0] <0, c[1:][1] <0, c[1:][2] <0]) for c in neighbours]
+            out_of_box_penalties = [OUT_OF_BOX_PENALTY if el else 1.0 for el in out_of_box]
+            # out_of_box_penalties = [v/sum(out_of_box_penalties) for v in out_of_box_penalties]
+
+
+            md_penalties = [1]*len(neighbours)
+            if self.ori_md is not None :
+                if coordinates_list[i] in self.ori_md['indexes']:
+                    md_penalties = [MD_CLUSTERING_AMPLITUDE/eu_dst(self.ori_md['cm'], neighbour[1:]) for neighbour in neighbours]
+                    # print(md_penalties)
+
+            trial_monomers = [[v[1] - v[0] for v in zip(neighbour[1:], coords_list[coordinates_list[i]])]
+                              for neighbour in neighbours]
+            # print(trial_monomers)
+
+            bend = [np.dot(last_monomer, monomer) for monomer in trial_monomers ]
+            # print(bend, bend.index(max(bend)))
+            bend_penalty = [1]*len(neighbours)
+            bend_penalty[bend.index(max(bend))] = BEND_CONSTANT
+            # sys.exit()
+
+            pull_penalty = [1] * len(neighbours)
+            if ori_ark:
+                if    self.top:
+                    dst = [self.B - neighbour[2] for neighbour in neighbours]
+                else:
+                    dst = [neighbour[2] for neighbour in neighbours]
+                pull_penalty[dst.index(min(dst))] = PULL_CONSTANT
+
+            total_penalties = [el2 *el4 * el3 *el1*el5*el6 for el1, el2, el3, el4, el5,el6 in
+                               zip(n_confs, overlap_penalties, out_of_box_penalties, md_penalties, bend_penalty,pull_penalty)]
+
+            total_penalties = [item / sum(total_penalties) for item in total_penalties]
+            # if coordinates_list[i] in self.ori_md['indexes']:
+            #     just_count +=1
+            #     if total_penalties.index(max(total_penalties)) == md_penalties.index(max(md_penalties)):
+            #         md_count += 1
+            r = np.cumsum(total_penalties)
+            # print(r,  total_penalties)
+
+            # print(out_of_box)
+            # sys.exit()
+
+            # print(r)
+            ind = np.where(r > np.random.random())[0][0]
+            selected = neighbours[ind]
+
+            # if random.random() < .0001:
+            #     print('n_confs ', n_confs)
+            #     print('out_of_box_penalties', out_of_box_penalties)
+            #     print('overlap_penalties', overlap_penalties)
+            #     print('md_penalties', md_penalties)
+            #     print(total_penalties)
+            #     # print(ind, md_penalties.index(max(md_penalties)))
+            #     print(10 * 'XXXXXXXX')
+                # if ind == md_penalties.index(max(md_penalties)):
+                #     print('catch')
+            # self.coordinates[:, coordinates_list[i+1]] = selected[1:].copy()
+            coords_list[coordinates_list[i+1]] = selected[1:].copy()
+            last_monomer = [v[1]-v[0] for v in
+                            zip(coords_list[coordinates_list[i+1]] , coords_list[coordinates_list[i]])]
+
+        self.coordinates = np.array(coords_list).T
+
+        # if np.sum(np.abs(np.diff(self.coordinates.T, axis=0))) != len(np.diff(self.coordinates.T, axis=0)):
+        #     print(np.sum(np.abs(np.diff(self.coordinates.T, axis=0))), len(np.diff(self.coordinates.T, axis=0)))
+        #     print(repr(self.coordinates.T))
+        #     # print(repr(regrown_coords.T))
+        #     print(coordinates_list)
+        #     sys.exit()
+
+        self.output = self.coordinates.copy()
+        # if just_count >0:
+        #     print(md_count, just_count)
+        return self.output
 
 
 

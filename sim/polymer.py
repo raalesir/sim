@@ -41,10 +41,6 @@ class Polymer:
         self.cell = cell_
         self.md_size = int(self.n // 4)
 
-        # print('args are:' , args)
-
-        # print([move.__str__() for move in args])
-
         self.coords_tmp = None
         self.coords = self.set_init_coords()
 

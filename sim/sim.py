@@ -11,35 +11,35 @@ import numpy as np
 # import matplotlib.pyplot as plt
 
 import random
-import  sys
 
 try:
     from sim.consts import TER_ENERGY_AMPLITUDE
     from sim.cell import CubicCell, ForceCubicCell
-    from sim.aux import  cache_n_conf, get_ind1ind2
-    from sim.moves import Kink, CrankShaft, Pin, Rosenbluth, Rosenbluth1
+    from sim.aux import cache_n_conf, get_ind1ind2
+    from sim.moves import Kink, CrankShaft, Pin, Rosenbluth, Rosenbluth1,RosenbluthReplicationFactory
     from sim.polymer import Polymer
-    from sim.force_field import  ForceField
+    from sim.force_field import ForceField
+    from sim import cell
 
 except ModuleNotFoundError:
     try:
         from cell import CubicCell, ForceCubicCell
-        from consts import  TER_ENERGY_AMPLITUDE
+        from consts import TER_ENERGY_AMPLITUDE
         from aux import cache_n_conf, get_ind1ind2
-        from moves import Kink,CrankShaft, Pin, Rosenbluth, Rosenbluth1
+        from moves import Kink, CrankShaft, Pin, Rosenbluth, Rosenbluth1,RosenbluthReplicationFactory
         from polymer import Polymer
-        from force_field import  ForceField
+        from force_field import ForceField
+        import cell
     except:
-        from .cell import  CubicCell, ForceCubicCell
-        from .moves import  Kink, CrankShaft,Pin, Rosenbluth, Rosenbluth1
+        from .cell import CubicCell, ForceCubicCell, ReplicationFactoryCell
+        from .moves import Kink, CrankShaft, Pin, Rosenbluth, Rosenbluth1,RosenbluthReplicationFactory
         from .polymer import Polymer
-        from .aux import  cache_n_conf, get_ind1ind2
+        from .aux import cache_n_conf, get_ind1ind2
         from .force_field import ForceField
         from .consts import TER_ENERGY_AMPLITUDE
 
 
-
-def prepare_simulation(a,b,c, n):
+def prepare_simulation(a, b, c, n):
     """
     prepare simulation
     :return:
@@ -50,13 +50,11 @@ def prepare_simulation(a,b,c, n):
     f_f.origin = b
     print(f_f)
 
-
     # cell = CubicCell(a, b, c)
-    cell = ForceCubicCell(a,b,c, f_f)
+    cell = ForceCubicCell(a, b, c, f_f)
     print(cell)
     print(cell.get_center())
-    print("the force origin is at: %s" %cell.f_f.origin)
-
+    print("the force origin is at: %s" % cell.f_f.origin)
 
     kink = Kink()
     print(kink)
@@ -67,7 +65,6 @@ def prepare_simulation(a,b,c, n):
 
     rosenbluth = Rosenbluth()
     print(rosenbluth)
-
 
     polymer = Polymer(n, cell, kink, crankshaft, pin, rosenbluth)
     # polymer = Polymer(n, cell, rosen)
@@ -82,9 +79,7 @@ def prepare_simulation(a,b,c, n):
     return polymer
 
 
-
-
-def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, n_steps = 1000,
+def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, n_steps=1000,
                    use_moves=['move_rosenbluth']):
     """
     running the  simulation
@@ -95,18 +90,18 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
     cached_counts = cache_n_conf(polymer.n, polymer.cell.A, polymer.cell.B, polymer.cell.C)
     print('done')
 
-    walks=[]
-    distances=[]
+    walks = []
+    distances = []
     for step in range(n_steps):
         coords_save = polymer.coords.copy()
         if hasattr(polymer, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
             polymer.move_rosenbluth.coordinates = polymer.coords.copy()
 
-            ind1 = random.randint(0, polymer.coords.shape[1]-1)
+            ind1 = random.randint(0, polymer.coords.shape[1] - 1)
             ind2 = ind1
             while ind2 == ind1:
                 # print('stuck')
-                ind2 = random.randint(0, polymer.coords.shape[1]-1)
+                ind2 = random.randint(0, polymer.coords.shape[1] - 1)
 
             # print('before ', a,b, abs(ind2-ind1), ind1, ind2)
             rnd = random.random()
@@ -153,10 +148,10 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
             energy_old = energy_old1 + energy_old2
 
             # print(energy_old, energy_new)
-            if (energy_new-energy_old) < rnd:
+            if (energy_new - energy_old) < rnd:
                 polymer.coords = polymer.coords_tmp.copy()
                 # polymer.coords = np.roll(polymer.coords, random.randint(1, polymer.coords.shape[1]), axis=1)
-                if show & (step%100 == 0) :
+                if show & (step % 100 == 0):
                     # print('show')
                     scatter.x = polymer.coords[0, :];
                     scatter.y = polymer.coords[1, :];
@@ -164,13 +159,13 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
                     lines.x = polymer.coords[0, :];
                     lines.y = polymer.coords[1, :];
                     lines.z = polymer.coords[2, :];
-                    ori_ter.x = polymer.coords[0, [0, polymer.n //2]]
-                    ori_ter.y = polymer.coords[1, [0, polymer.n //2]]
-                    ori_ter.z = polymer.coords[2, [0, polymer.n //2]]
+                    ori_ter.x = polymer.coords[0, [0, polymer.n // 2]]
+                    ori_ter.y = polymer.coords[1, [0, polymer.n // 2]]
+                    ori_ter.z = polymer.coords[2, [0, polymer.n // 2]]
 
-                    t =  np.mean(polymer.coords, axis=1)
+                    t = np.mean(polymer.coords, axis=1)
                     # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
-                    dst  = polymer.cell.f_f.get_distance(t[1])
+                    dst = polymer.cell.f_f.get_distance(t[1])
                     walks.append(t)
                     distances.append(dst)
         else:
@@ -180,7 +175,6 @@ def run_simulation(polymer, scatter=None, lines=None, ori_ter=None, show=False, 
     print("after  moves")
     print(polymer.coords)
     return walks, distances
-
 
 
 def make_indexes_and_ark(polymer_):
@@ -205,7 +199,6 @@ def make_indexes_and_ark(polymer_):
     else:
         ori_ark = False
 
-
     return ind1, ind2, ori_ark
 
 
@@ -224,27 +217,26 @@ def ter_energy(p1, p2, new=True):
     """
 
     # print('p.cell.A', p.cell.A)
-    t1 = np.array([p1.cell.A, p1.cell.B/2,  p1.cell.C/2])#.reshape(3,1)
+    t1 = np.array([p1.cell.A, p1.cell.B / 2, p1.cell.C / 2])  # .reshape(3,1)
     # print(t1)
     if new:
-        t2_1  = p1.coords_tmp[:, p1.n // 2]
-        t2_2  = p2.coords_tmp[:, p1.n // 2]
+        t2_1 = p1.coords_tmp[:, p1.n // 2]
+        t2_2 = p2.coords_tmp[:, p1.n // 2]
 
     else:
         t2_1 = p1.coords[:, p1.n // 2]
         t2_2 = p1.coords[:, p1.n // 2]
 
     # print(t2)
-    tmp1  = t2_1-t1
-    tmp1  = TER_ENERGY_AMPLITUDE * np.dot(tmp1,  tmp1)
+    tmp1 = t2_1 - t1
+    tmp1 = TER_ENERGY_AMPLITUDE * np.dot(tmp1, tmp1)
     tmp2 = t2_2 - t1
     tmp2 = TER_ENERGY_AMPLITUDE * np.dot(tmp2, tmp2)
 
-    return tmp1+tmp2
+    return tmp1 + tmp2
 
 
-
-def  attraction_energy(p1, p2, new=True):
+def attraction_energy(p1, p2, new=True):
     """
     calculates attraction energy for a polymer.
     It pulls Polymer2 to the top and Polymer1 to the bottom.
@@ -267,7 +259,7 @@ def  attraction_energy(p1, p2, new=True):
             energy1 = p1.cell.f_f.get_value()(dst)
 
             t2 = np.mean(p2.coords_tmp, axis=1)
-            dst_new2 =  p2.cell.B  - p2.cell.f_f.get_distance(t2[1])
+            dst_new2 = p2.cell.B - p2.cell.f_f.get_distance(t2[1])
             energy2 = p2.cell.f_f.get_value()(dst_new2)
         else:
 
@@ -279,16 +271,14 @@ def  attraction_energy(p1, p2, new=True):
             dst_old2 = p2.cell.B - p2.cell.f_f.get_distance(t2[1])
             energy2 = p2.cell.f_f.get_value()(dst_old2)
 
-        return energy1+energy2
+        return energy1 + energy2
     else:
-        return  0
+        return 0
 
 
 def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori1=None, ori2=None,
                      show=False, n_steps=1000,
                      use_moves=['move_rosenbluth']):
-
-
     """
     running the  simulation
     :return:
@@ -298,9 +288,10 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     cached_counts = cache_n_conf(polymer1.n, polymer1.cell.A, polymer1.cell.B, polymer1.cell.C)
     print('done')
     print('coords should be equal:', np.array_equal(polymer1.coords, polymer2.coords))
-    walks1 = []; walks2 = []; mu=[]
+    walks1 = [];
+    walks2 = [];
+    mu = []
     distances = []
-
 
     polymer1.move_rosenbluth.A = polymer1.cell.A
     polymer1.move_rosenbluth.B = polymer1.cell.B
@@ -312,20 +303,15 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
     accepted = 0
     outside = 0
 
-
-
-
     for step in range(n_steps):
-        if step%10000 == 0:
+        if step % 10000 == 0:
             print(step)
         coords_save1 = polymer1.coords.copy()
         coords_save2 = polymer2.coords.copy()
 
         if hasattr(polymer1, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
 
-
-
-            if step >= int(0.7*n_steps):
+            if step >= int(0.7 * n_steps):
                 polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
                 polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
                                                    'cm': polymer2.get_cm_md()}  # transferring MD info to move
@@ -341,15 +327,14 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
             else:
 
-                i1, i2 = get_ind1ind2(step, int(0.7*n_steps), polymer1.n)
-                if step %2 ==  0:
+                i1, i2 = get_ind1ind2(step, int(0.7 * n_steps), polymer1.n)
+                if step % 2 == 0:
 
                     polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
                     polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
                                                        'cm': polymer1.get_cm_md()}  # transferring MD info to move
 
                     ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
-
 
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
                     # print(ind1,  ind2)
@@ -359,7 +344,8 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
 
                     polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
-                                                       'cm': polymer2.get_cm_md(tmp=True)}  # transferring MD info to move
+                                                       'cm': polymer2.get_cm_md(
+                                                           tmp=True)}  # transferring MD info to move
                     polymer2.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
 
@@ -373,7 +359,6 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
                     polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
 
-
                     polymer1.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
                     polymer1.move_rosenbluth.ori_md = None
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
@@ -381,36 +366,37 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
                     polymer1.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
                     polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
-                                                   'cm': polymer1.get_cm_md(tmp=True)}  # transferring MD info to move
+                                                       'cm': polymer1.get_cm_md(
+                                                           tmp=True)}  # transferring MD info to move
                     polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
-                                                                         ori_ark=True)
+                                                                             ori_ark=True)
 
         # print('diff\n ', repr(polymer1.coords),  repr(polymer1.coords_tmp))
 
 
-        if polymer1.check_borders() &  polymer2.check_borders():# & polymer1.check_overlap() & polymer2.check_overlap() :
+        if polymer1.check_borders() & polymer2.check_borders():  # & polymer1.check_overlap() & polymer2.check_overlap() :
 
             # calculatin energy for the new configuration
-            energy_new = attraction_energy(polymer1, polymer2) +\
-                        ter_energy(polymer1, polymer2)
-                         # 2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
-                         # .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
-                         # .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
+            energy_new = attraction_energy(polymer1, polymer2) + \
+                         ter_energy(polymer1, polymer2)
+            # 2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
+            # .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
+            # .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
 
             # calculatin energy for the old configuration
             energy_old = attraction_energy(polymer1, polymer2, new=False) + \
-                         ter_energy(polymer1, polymer2, new = False)
+                         ter_energy(polymer1, polymer2, new=False)
             # 2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
-                         # 0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
-                         # 0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
+            # 0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
+            # 0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
 
 
             # print(energy_old, energy_new)
             if (np.exp(-energy_new + energy_old)) >= random.random():
                 polymer1.coords = polymer1.coords_tmp.copy()
                 polymer2.coords = polymer2.coords_tmp.copy()
-                accepted +=1
-                if step % 1000 == 0: print('acceptance is: ', 100* accepted/(step+1), -energy_new + energy_old )
+                accepted += 1
+                if step % 1000 == 0: print('acceptance is: ', 100 * accepted / (step + 1), -energy_new + energy_old)
                 # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
 
                 t1 = np.mean(polymer1.coords, axis=1)
@@ -425,56 +411,257 @@ def run_simulation_2(polymer1, polymer2, scatter1=None, lines1=None, scatter2=No
 
                 diffs = 0
                 for idx in range(polymer1.cell.B):
-                    p1_counts = np.count_nonzero(polymer1.coords[1,:] == idx)
-                    p2_counts = np.count_nonzero(polymer2.coords[1,:] == idx)
+                    p1_counts = np.count_nonzero(polymer1.coords[1, :] == idx)
+                    p2_counts = np.count_nonzero(polymer2.coords[1, :] == idx)
                     diffs += abs(p2_counts - p1_counts)
 
                 mu.append(diffs)
 
             if show & (step % 1000 == 0):
-                    # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
+                # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
 
-                    scatter1.x = polymer1.coords[0, :];
-                    scatter1.y = polymer1.coords[1, :];
-                    scatter1.z = polymer1.coords[2, :];
-                    lines1.x = polymer1.coords[0, :];
-                    lines1.y = polymer1.coords[1, :];
-                    lines1.z = polymer1.coords[2, :];
+                scatter1.x = polymer1.coords[0, :];
+                scatter1.y = polymer1.coords[1, :];
+                scatter1.z = polymer1.coords[2, :];
+                lines1.x = polymer1.coords[0, :];
+                lines1.y = polymer1.coords[1, :];
+                lines1.z = polymer1.coords[2, :];
 
-                    scatter2.x = polymer2.coords[0, :];
-                    scatter2.y = polymer2.coords[1, :];
-                    scatter2.z = polymer2.coords[2, :];
-                    lines2.x = polymer2.coords[0, :];
-                    lines2.y = polymer2.coords[1, :];
-                    lines2.z = polymer2.coords[2, :];
+                scatter2.x = polymer2.coords[0, :];
+                scatter2.y = polymer2.coords[1, :];
+                scatter2.z = polymer2.coords[2, :];
+                lines2.x = polymer2.coords[0, :];
+                lines2.y = polymer2.coords[1, :];
+                lines2.z = polymer2.coords[2, :];
 
-                    ori1.x = polymer1.coords[0, 0:1]
-                    ori1.y = polymer1.coords[1, 0:1]
-                    ori1.z = polymer1.coords[2, 0:1]
+                ori1.x = polymer1.coords[0, 0:1]
+                ori1.y = polymer1.coords[1, 0:1]
+                ori1.z = polymer1.coords[2, 0:1]
 
-                    ori2.x = polymer2.coords[0, 0:1]
-                    ori2.y = polymer2.coords[1, 0:1]
-                    ori2.z = polymer2.coords[2, 0:1]
+                ori2.x = polymer2.coords[0, 0:1]
+                ori2.y = polymer2.coords[1, 0:1]
+                ori2.z = polymer2.coords[2, 0:1]
 
 
 
-                    # distances.append(dst)
+                # distances.append(dst)
         else:
             # print('outside')
-            outside+=1
+            outside += 1
             if step % 100 == 0: print('outside is: ', 100 * outside / (step + 1))
 
             polymer1.coords = coords_save1
             polymer2.coords = coords_save2
 
+    print("after  moves")
+    print(polymer1.coords)
+    return walks1, walks2, mu  # distances
+
+
+
+def run_simulation_3(polymer1, polymer2, scatter1=None, lines1=None, scatter2=None, lines2=None, ori1=None,
+                     ori2=None, r_factory1=None, r_factory2 = None,
+                     show=False, n_steps=1000,
+                     use_moves=['move_rosenbluth']):
+
+    """
+    running the  simulation
+    :return:
+    :rtype:
+    """
+    print('caching  counts...')
+    cached_counts = cache_n_conf(polymer1.n, polymer1.cell.A, polymer1.cell.B, polymer1.cell.C)
+    print('done')
+    print('coords should be equal:', np.array_equal(polymer1.coords, polymer2.coords))
+    walks1 = []; walks2 = []; mu = []
+    distances = []
+
+    polymer1.move_rosenbluth.A = polymer1.cell.A
+    polymer1.move_rosenbluth.B = polymer1.cell.B
+    polymer1.move_rosenbluth.C = polymer1.cell.C
+
+    polymer2.move_rosenbluth.A = polymer2.cell.A
+    polymer2.move_rosenbluth.B = polymer2.cell.B
+    polymer2.move_rosenbluth.C = polymer2.cell.C
+    accepted = 0
+    outside = 0
+
+
+    for step in range(n_steps):
+        if step % 10000 == 0:
+            print(step)
+        coords_save1 = polymer1.coords.copy()
+        coords_save2 = polymer2.coords.copy()
+
+        if hasattr(polymer1, 'move_rosenbluth') and 'move_rosenbluth' in use_moves:
+
+            if step >= int(0.7 * n_steps):
+                polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
+                polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
+                                                   'cm': polymer2.get_cm_md()}  # transferring MD info to move
+                ind1_, ind2_, ori_ark_ = make_indexes_and_ark(polymer2)
+                polymer2.move_rosenbluth.top = False
+                polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1_, ind2_, cached_counts, ori_ark=ori_ark_)
+
+                polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
+                polymer1.move_rosenbluth.coordinates_another = polymer2.coords_tmp.copy()
+                polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
+                                                   'cm': polymer1.get_cm_md()}  # transferring MD info to move
+                ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
+                polymer1.move_rosenbluth.top = True
+
+                polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
+
+            else:
+
+                i1, i2 = get_ind1ind2(step, int(0.7 * n_steps), polymer1.n)
+                if step % 1 == 0:
+
+                    polymer1.move_rosenbluth.coordinates = polymer1.coords.copy()
+                    polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
+                                                       'cm': polymer1.get_cm_md()}  # transferring MD info to move
+
+                    # ind1, ind2, ori_ark = make_indexes_and_ark(polymer1)
+                    r1, r2 = polymer1.cell.repl_factory # replication points location
+                    polymer1.move_rosenbluth.coordinates[:, i1] = r1
+                    polymer1.move_rosenbluth.coordinates[:, i2] = r2
+                    # print(r1, r2, i1, i2)
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=False)
+                    # print('ori_ark=False')
+                    polymer1.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                    polymer1.move_rosenbluth.top = True
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
+
+
+                    # print(ind1,  ind2)
+                    # sys.exit()
+
+                    polymer2.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                    polymer2.move_rosenbluth.ori_md = None
+                    polymer2.move_rosenbluth.top = False
+                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
+
+                    # polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
+                    #                                    'cm': polymer2.get_cm_md(tmp=True)}  # transferring MD info to move
+                    # polymer2.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
+                    # polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(i1, i2, cached_counts, ori_ark=True)
+
+
+                else:
+                    polymer2.move_rosenbluth.coordinates = polymer2.coords.copy()
+                    polymer2.move_rosenbluth.ori_md = {'indexes': polymer2.ori_md,
+                                                       'cm': polymer2.get_cm_md()}  # transferring MD info to move
+
+                    ind1, ind2, ori_ark = make_indexes_and_ark(polymer2)
+
+                    polymer2.coords_tmp = polymer2.move_rosenbluth.getOutput(ind1, ind2, cached_counts, ori_ark=ori_ark)
+
+                    polymer1.move_rosenbluth.coordinates = polymer2.coords_tmp.copy()
+                    polymer1.move_rosenbluth.ori_md = None
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
+                                                                             ori_ark=True)
+
+                    polymer1.move_rosenbluth.coordinates = polymer1.coords_tmp.copy()
+                    polymer1.move_rosenbluth.ori_md = {'indexes': polymer1.ori_md,
+                                                       'cm': polymer1.get_cm_md(tmp=True)}  # transferring MD info to move
+                    polymer1.coords_tmp = polymer1.move_rosenbluth.getOutput(i1, i2, cached_counts,
+                                                                             ori_ark=True)
+
+        # print('diff\n ', repr(polymer1.coords),  repr(polymer1.coords_tmp))
+
+
+        if polymer1.check_borders() & polymer2.check_borders():  # & polymer1.check_overlap() & polymer2.check_overlap() :
+
+            # calculatin energy for the new configuration
+            energy_new = attraction_energy(polymer1, polymer2) + \
+                         ter_energy(polymer1, polymer2)
+            # 2.*np.intersect1d(polymer1.coords_tmp, polymer2.coords_tmp).size \
+            # .5 * np.intersect1d(polymer1.coords_tmp, polymer1.coords_tmp).size+ \
+            # .5 * np.intersect1d(polymer2.coords_tmp, polymer2.coords_tmp).size
+
+            # calculatin energy for the old configuration
+            energy_old = attraction_energy(polymer1, polymer2, new=False) + \
+                         ter_energy(polymer1, polymer2, new=False)
+            # 2.*np.intersect1d(polymer1.coords, polymer2.coords).size \
+            # 0.5 * np.intersect1d(polymer2.coords, polymer2.coords).size+ \
+            # 0.5 * np.intersect1d(polymer1.coords, polymer1.coords).size
+
+
+            # print(energy_old, energy_new)
+            if (np.exp(-energy_new + energy_old)) >= random.random():
+                polymer1.coords = polymer1.coords_tmp.copy()
+                polymer2.coords = polymer2.coords_tmp.copy()
+                accepted += 1
+                if step % 1000 == 0: print('acceptance is: ', 100 * accepted / (step + 1), -energy_new + energy_old)
+                # polymer1.coords = np.roll(polymer1.coords, random.randint(1, polymer1.coords.shape[1]), axis=1)
+
+                t1 = np.mean(polymer1.coords, axis=1)
+                t2 = np.mean(polymer2.coords, axis=1)
+
+                # print("%.1f, %.1f, %.1f"%(t[0], t[1], t[2]))
+                # dst1 = polymer1.cell.f_f.get_distance(t1[1])
+                # dst1 = polymer1.cell.f_f.get_distance(t1[1])
+
+                walks1.append(t1)
+                walks2.append(t2)
+
+                diffs = 0
+                for idx in range(polymer1.cell.B):
+                    p1_counts = np.count_nonzero(polymer1.coords[1, :] == idx)
+                    p2_counts = np.count_nonzero(polymer2.coords[1, :] == idx)
+                    diffs += abs(p2_counts - p1_counts)
+
+                mu.append(diffs)
+
+            if show & (step % 1000 == 0):
+                # print(ind1, ind2, ori_ark, ind1_, ind2_, ori_ark_)
+
+                scatter1.x = polymer1.coords[0, :];
+                scatter1.y = polymer1.coords[1, :];
+                scatter1.z = polymer1.coords[2, :];
+                lines1.x = polymer1.coords[0, :];
+                lines1.y = polymer1.coords[1, :];
+                lines1.z = polymer1.coords[2, :];
+
+                scatter2.x = polymer2.coords[0, :];
+                scatter2.y = polymer2.coords[1, :];
+                scatter2.z = polymer2.coords[2, :];
+                lines2.x = polymer2.coords[0, :];
+                lines2.y = polymer2.coords[1, :];
+                lines2.z = polymer2.coords[2, :];
+
+                ori1.x = polymer1.coords[0, 0:1]
+                ori1.y = polymer1.coords[1, 0:1]
+                ori1.z = polymer1.coords[2, 0:1]
+
+                ori2.x = polymer2.coords[0, 0:1]
+                ori2.y = polymer2.coords[1, 0:1]
+                ori2.z = polymer2.coords[2, 0:1]
+
+                r_factory1.x = polymer1.coords[0, i1:i1+1]
+                r_factory1.y = polymer1.coords[1, i1:i1+1]
+                r_factory1.z = polymer1.coords[2, i1:i1+1]
+
+                r_factory2.x = polymer1.coords[0, i2:i2 + 1]
+                r_factory2.y = polymer1.coords[1, i2:i2 + 1]
+                r_factory2.z = polymer1.coords[2, i2:i2 + 1]
+
+
+                # distances.append(dst)
+        else:
+            # print('outside')
+            outside += 1
+            if step % 100 == 0: print('outside is: ', 100 * outside / (step + 1))
+
+            polymer1.coords = coords_save1
+            polymer2.coords = coords_save2
 
     print("after  moves")
     print(polymer1.coords)
-    return walks1, walks2, mu #distances
+    return walks1, walks2, mu  # distances
 
 
-
-def prepare_simulation_2(a,b,c, n):
+def prepare_simulation_2(a, b, c, n):
     """
     prepare simulation
     :return:
@@ -485,13 +672,11 @@ def prepare_simulation_2(a,b,c, n):
     f_f.origin = b
     print(f_f)
 
-
     # cell = CubicCell(a, b, c)
-    cell = ForceCubicCell(a,b,c, f_f)
+    cell = ForceCubicCell(a, b, c, f_f)
     print(cell)
     print(cell.get_center())
-    print("the force origin is at: %s" %cell.f_f.origin)
-
+    print("the force origin is at: %s" % cell.f_f.origin)
 
     kink = Kink()
     print(kink)
@@ -504,12 +689,67 @@ def prepare_simulation_2(a,b,c, n):
     print(rosenbluth1)
     rosenbluth2 = Rosenbluth1()
 
-    macro_domains  = ['ori', 'ter','left', 'right','ns_left', 'ns_right']
+    macro_domains = ['ori', 'ter', 'left', 'right', 'ns_left', 'ns_right']
     moves = [kink, crankshaft, pin, rosenbluth1]
-    polymer1 = Polymer(n, cell, moves=moves, mds = macro_domains)
+    polymer1 = Polymer(n, cell, moves=moves, mds=macro_domains)
 
     moves = [kink, crankshaft, pin, rosenbluth2]
-    polymer2 = Polymer(n, cell, moves=moves, mds = macro_domains)
+    polymer2 = Polymer(n, cell, moves=moves, mds=macro_domains)
+
+    # polymer = Polymer(n, cell, rosen)
+
+    print(polymer1)
+    print('squashed coordinates are:')
+    print(polymer1.get_coords())
+
+    print('unrolled coordinates are:')
+    print(polymer1.unroll_chain())
+
+    print(polymer2)
+    print('squashed coordinates are:')
+    print(polymer2.get_coords())
+
+    print('unrolled coordinates are:')
+    print(polymer2.unroll_chain())
+
+    return polymer1, polymer2
+
+
+def prepare_simulation_3(a, b, c, n):
+    """
+    prepare simulation
+    :return:
+    :rtype:
+    """
+
+    f_f = ForceField(linear=True, amplitude=10, on=False)
+    f_f.origin = b
+    print(f_f)
+
+    cell = ReplicationFactoryCell(a, b, c, f_f)
+    print(cell)
+    print(cell.get_center())
+    print("the replication factory location is: %s" % cell.repl_factory)
+    print("the force origin is at: %s" % cell.f_f.origin)
+
+
+    kink = Kink()
+    print(kink)
+    crankshaft = CrankShaft()
+    print(crankshaft)
+    pin = Pin()
+    print(pin)
+
+    rosenbluth1 = RosenbluthReplicationFactory()
+    print(rosenbluth1)
+    rosenbluth2 = RosenbluthReplicationFactory()
+
+    macro_domains = ['ori', 'ter', 'left', 'right', 'ns_left', 'ns_right']
+    moves = [kink, crankshaft, pin, rosenbluth1]
+    polymer1 = Polymer(n, cell, moves=moves, mds=macro_domains)
+
+    moves = [kink, crankshaft, pin, rosenbluth2]
+    polymer2 = Polymer(n, cell, moves=moves, mds=macro_domains)
 
     # polymer = Polymer(n, cell, rosen)
 
@@ -531,6 +771,5 @@ def prepare_simulation_2(a,b,c, n):
 
 
 if __name__ == "__main__":
-
-    polymer =  prepare_simulation(10,10,10, 50)
+    polymer = prepare_simulation(10, 10, 10, 50)
     run_simulation(polymer)
