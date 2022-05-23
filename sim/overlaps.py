@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 class Overlap:
     """
-    calculating number of overlaps  for a ring grid polymer of given N
+    calculating number of overlaps  for a ring grid polymer of given N.
+    N should be  even to make a ring polymer.
     """
 
     def __init__(self, N):
@@ -45,8 +46,20 @@ class Overlap:
                     self.n // 2 - i - j)**2
         return r
 
+
     def fun(self, d, res):
-        if sum(d.values()) == 0:
+        """
+        returns a letter representation for a number combination.
+        For example for  n=4 it  is (2,0,0) -->> ['i+i+i-i-', 'i+i-i+i-', 'i+i-i-i+', '-+-+', '-++-'  ,'--++']
+
+        :param d: numeric representation of the closed trajectory e.g. (2,0,1)
+        :type d: dict
+        :param res: string representation for all possible configurations  for the given numeric representation, see above in the function doc
+        :type res: str
+        :return: string representation for all possible configurations
+        :rtype:
+        """
+        if sum(d.values()) == 0: # if (0,0,0) that is we are at the initial point
             Overlap.keep_result(res)
             return
         else:
@@ -120,7 +133,9 @@ class Overlap:
         Overlap.keep_result.all = []
 
         for entry in self.dict:
+            # generating trajectory representation  for each combination
             self.fun(entry, '')
+            # print(Overlap.keep_result.all)
 
 
     def encode_single_conformation(self, conformation):
@@ -154,7 +169,8 @@ class Overlap:
 
     def encode_to_coords(self):
         """
-        encodes results to coordinates
+        encodes string conformation representation to the numeric representation
+        e.g. 'i+i+i-i-' --> [ (1,0,0), (2,0,0), (1,0,0), (0,0,0) ]
         """
         res = []
         for conformation in Overlap.keep_result.all:
@@ -176,8 +192,8 @@ class Overlap:
                 conf_encoded.append(tuple(start.copy()))
 
             res.append(conf_encoded)
-
         self.encoded_conformations = res
+
 
 
 
@@ -186,6 +202,7 @@ class Overlap:
         """
         overlaps = []
         for conf in self.encoded_conformations:
+            #  conf is like [ (1,0,0), (2,0,0), (1,0,0), (0,0,0) ]
             overlaps.append(sum([comb(lst, 2) for lst in Counter(conf).values()]))
 
         counts = Counter(overlaps)
@@ -198,7 +215,7 @@ class Overlap:
         fname = "counts_%i.json" % (self.n)
         if not os.path.isfile(fname):
 
-            self.calculate_all_conformations()
+            self.calculate_all_conformations() # all confs are encoded as a list of strings like 'i+i+i-i-'
             self.encode_to_coords()
             self.get_overlaps()
 
@@ -208,6 +225,7 @@ class Overlap:
             self.overlaps_hist = dict(zip([int(el) for el in dct.keys()], dct.values()))
 
         return self.overlaps_hist
+
 
     def save_overlaps_histogram(self):
         fname = "counts_%i.json" % (self.n)
