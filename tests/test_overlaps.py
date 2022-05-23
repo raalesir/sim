@@ -32,3 +32,19 @@ def test_overlap_distribution():
     overlaps_4 = overlaps.Overlap(N=4)
 
     assert  overlaps_4.get_overlaps_histogram() == {0: 24, 1: 60, 2: 6}
+
+
+
+def test_n_conf_all_confs():
+    """
+    the number of confs for phantom polymer according to the  formula should be equal to the length of the
+    list with all  confs  constructed
+
+    :return: True/False
+    :rtype: bool
+    """
+
+    overlaps_4 = overlaps.Overlap(N=4)
+    overlaps_4.calculate_all_conformations()
+    assert len(overlaps_4.keep_result.all) == overlaps_4.n_conformations
+
